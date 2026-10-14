@@ -1,10 +1,27 @@
 # corner-scouting
 
-COMP5118 P6-a: Analyzing team corner-kick tendencies and outcomes using StatsBomb open data.
+Analyzing team corner-kick tendencies and outcomes using StatsBomb open data. This project produces reproducible analyses and per-team scouting dossiers focused on corner-kick tendencies, outcomes, and set-piece patterns.
 
-See `docs/project-plan.md` for the project plan, responsibilities, and deadlines.
+Team members
 
-Quick start:
-1. Create a virtual environment: `python -m venv .venv`
-2. Install dependencies (add `requirements.txt` when ready)
-3. Run `src/scripts/download_data.py` (placeholder) to fetch StatsBomb data rather than committing raw files.
+- Team Member 1 — [Name]
+- Team Member 2 — [Name]
+- Team Member 3 — [Name]
+- Team Member 4 — [Name]
+- Team Member 5 — [Name]
+
+Deadlines
+
+- Proposal deadline: October 19, 11:59 PM
+- Final paper deadline: December 18, 11:59 PM
+
+Planned outputs
+
+- Corner table (aggregated corner events and outcomes per team)
+- Team statistics (corner creation, success rates, shot generation from corners)
+- Static setup groups (common player/ball placements and roles on corners)
+- Scouting dossier (team-by-team PDF or notebook summarizing tendencies and recommendations)
+
+Installation and execution
+
+Installation and execution instructions will be added once there is working code. See `docs/project-plan.md` for the project plan and folder organization.
