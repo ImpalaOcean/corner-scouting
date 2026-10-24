@@ -1,14 +1,14 @@
 # corner-scouting
 
-Analyzing team corner-kick tendencies and outcomes using StatsBomb open data. This project produces reproducible analyses and per-team scouting dossiers focused on corner-kick tendencies, outcomes, and set-piece patterns.
+Analyzing team corner-kick tendencies and outcomes using StatsBomb open data. This project produces reproducible analyses and per-team scouting dossiers focused on corner-kick tendencies, outcomes, and recommendations.
 
 Team members
 
-- Team Member 1 — [Name]
-- Team Member 2 — [Name]
-- Team Member 3 — [Name]
-- Team Member 4 — [Name]
-- Team Member 5 — Mohamed Hamail
+- Utkarsh Kohli (101423390)
+- Diego Fuentes (101322494)
+- Asaad Faris Husein (101238276)
+- Ebtesam Aloubid (101260655)
+- Mohamed Hamail (100834454)
 
 Deadlines
 
