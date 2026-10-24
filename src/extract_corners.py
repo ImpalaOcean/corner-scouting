@@ -97,3 +97,55 @@ for team, techniques in sorted(techniques_by_team.items()):
     for technique, count in sorted(techniques.items()):
         percentage = count / total * 100
         print(f"  {technique}: {count} ({percentage:.1f}%)")
+
+print("\nPossession identifiers for each corner:")
+for corner in corners:
+    print(
+        f"{corner['minute']}:{corner['second']:02d}"
+        f" | {corner['team']['name']}"
+        f" | possession: {corner.get('possession', 'Missing')}"
+    )
+
+first_corner = corners[0]
+for index, event in enumerate(events):
+    if event["id"] == first_corner["id"]:
+        print("\nActions after the first corner:")
+        for action in events[index:index + 11]:
+            print(
+                action["timestamp"],
+                "|",
+                action["type"]["name"],
+                "|",
+                action.get("team", {}).get("name", "Unknown"),
+                "| possession:",
+                action.get("possession", "Missing"),
+            )
+        break
+
+def timestamp_seconds(timestamp):
+    hours, minutes, seconds = timestamp.split(":")
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+
+first_corner = corners[0]
+start_time = timestamp_seconds(first_corner["timestamp"])
+corner_index = next(
+    index
+    for index, event in enumerate(events)
+    if event["id"] == first_corner["id"]
+)
+
+print("\nShots following the first corner:")
+for action in events[corner_index + 1:]:
+    if action["period"] != first_corner["period"]:
+        break
+    if action.get("possession") != first_corner["possession"]:
+        break
+    elapsed = timestamp_seconds(action["timestamp"]) - start_time
+    if elapsed > 15:
+        break
+    if (
+        action["type"]["name"] == "Shot"
+        and action["team"]["id"] == first_corner["team"]["id"]
+    ):
+        outcome = action["shot"]["outcome"]["name"]
+        print(f"Shot after {elapsed:.2f} seconds | {outcome}")
