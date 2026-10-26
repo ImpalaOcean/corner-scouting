@@ -2,6 +2,7 @@ import json
 import csv
 from pathlib import Path
 from urllib.request import urlopen
+from corners.extract import find_corners, find_corner_shots
 
 MATCH_ID = 3857276
 url = (
@@ -15,12 +16,8 @@ with urlopen(url, timeout=30) as response:
     events = json.load(response)
 
 corners = [
-    event
-    for event in events
-    if (
-        event.get("type", {}).get("name") == "Pass"
-        and event.get("pass", {}).get("type", {}).get("name") == "Corner"
-    )
+    event for event in find_corners(events)
+    if event["type"]["name"] == "Pass"
 ]
 
 print(f"Found {len(corners)} corner deliveries.")
@@ -98,54 +95,60 @@ for team, techniques in sorted(techniques_by_team.items()):
         percentage = count / total * 100
         print(f"  {technique}: {count} ({percentage:.1f}%)")
 
-print("\nPossession identifiers for each corner:")
-for corner in corners:
+print("\nOutcomes for every corner:")
+for corner in find_corners(events):
+    shots = find_corner_shots(events, corner)
+    goals = sum(
+        shot["shot"].get("outcome", {}).get("name") == "Goal"
+        for shot in shots
+    )
     print(
         f"{corner['minute']}:{corner['second']:02d}"
         f" | {corner['team']['name']}"
-        f" | possession: {corner.get('possession', 'Missing')}"
+        f" | shots: {len(shots)}"
+        f" | goals: {goals}"
     )
 
-first_corner = corners[0]
-for index, event in enumerate(events):
-    if event["id"] == first_corner["id"]:
-        print("\nActions after the first corner:")
-        for action in events[index:index + 11]:
-            print(
-                action["timestamp"],
-                "|",
-                action["type"]["name"],
-                "|",
-                action.get("team", {}).get("name", "Unknown"),
-                "| possession:",
-                action.get("possession", "Missing"),
-            )
-        break
+summary_rows = []
+for corner in find_corners(events):
+    shots = find_corner_shots(events, corner)
+    corner_kind = corner["type"]["name"]
+    delivery = corner[corner_kind.lower()]
+    summary_rows.append({
+        "match_id": MATCH_ID,
+        "corner_event_id": corner["id"],
+        "team_id": corner["team"]["id"],
+        "team": corner["team"]["name"],
+        "taker": corner.get("player", {}).get("name", "Unknown"),
+        "period": corner["period"],
+        "timestamp": corner["timestamp"],
+        "possession_id": corner["possession"],
+        "corner_kind": corner_kind,
+        "technique": delivery.get("technique", {}).get("name", "Unknown"),
+        "foot": delivery.get("body_part", {}).get("name", "Unknown"),
+        "height": delivery.get("height", {}).get("name", "Unknown"),
+        "shot_count": len(shots),
+        "goal_count": sum(
+            shot["shot"].get("outcome", {}).get("name") == "Goal"
+            for shot in shots
+        ),
+        "led_to_shot": bool(shots),
+        "provider_xg_sum": sum(
+            shot["shot"].get("statsbomb_xg", 0) or 0
+            for shot in shots
+        ),
+        "shot_event_ids": json.dumps([shot["id"] for shot in shots]),
+    })
 
-def timestamp_seconds(timestamp):
-    hours, minutes, seconds = timestamp.split(":")
-    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
-
-first_corner = corners[0]
-start_time = timestamp_seconds(first_corner["timestamp"])
-corner_index = next(
-    index
-    for index, event in enumerate(events)
-    if event["id"] == first_corner["id"]
-)
-
-print("\nShots following the first corner:")
-for action in events[corner_index + 1:]:
-    if action["period"] != first_corner["period"]:
-        break
-    if action.get("possession") != first_corner["possession"]:
-        break
-    elapsed = timestamp_seconds(action["timestamp"]) - start_time
-    if elapsed > 15:
-        break
-    if (
-        action["type"]["name"] == "Shot"
-        and action["team"]["id"] == first_corner["team"]["id"]
-    ):
-        outcome = action["shot"]["outcome"]["name"]
-        print(f"Shot after {elapsed:.2f} seconds | {outcome}")
+summary_file = output_folder / "corner_summary.csv"
+if summary_rows:
+    with summary_file.open(
+        "w", newline="", encoding="utf-8-sig"
+    ) as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=list(summary_rows[0].keys()),
+        )
+        writer.writeheader()
+        writer.writerows(summary_rows)
+    print(f"Saved {len(summary_rows)} corner outcomes to {summary_file}")
