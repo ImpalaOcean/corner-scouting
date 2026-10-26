@@ -1,5 +1,6 @@
 # corner-scouting
 
+https://drive.google.com/drive/folders/1VqjDC-j2P2vSXZmH6q83Rtac_39KSRYG?usp=drive_link
 Analyzing team corner-kick tendencies and outcomes using StatsBomb open data. This project produces reproducible analyses and per-team scouting dossiers focused on corner-kick tendencies, outcomes, and recommendations.
 
 Team members
