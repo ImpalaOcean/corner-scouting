@@ -37,6 +37,21 @@ def shot(second=4):
 
 
 class CornerExtractionTests(unittest.TestCase):
+    def test_uncapped_window_still_respects_possession(self):
+        delivery = corner()
+        late_attempt = shot(20)
+        boundary = event("Pass", 25, possession=18)
+        events = [delivery, late_attempt, boundary, shot(30)]
+        self.assertEqual(find_corner_shots(events, delivery), [])
+        self.assertEqual(
+            find_corner_shots(events, delivery, max_seconds=None), [late_attempt]
+        )
+
+    def test_straight_delivery_category(self):
+        delivery = corner()
+        delivery["pass"]["technique"] = {"name": "Straight"}
+        self.assertEqual(describe_corner(delivery)["delivery_category"], "straight")
+
     def test_builds_one_summary_per_corner(self):
         delivery = corner()
         attempt = shot(4)

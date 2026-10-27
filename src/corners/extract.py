@@ -134,7 +134,7 @@ def describe_corner(corner, short_limit=15):
             category = "short"
         else:
             technique = details.get("technique", {}).get("name")
-            if technique in {"Inswinging", "Outswinging"}:
+            if technique in {"Inswinging", "Outswinging", "Straight"}:
                 category = technique.lower()
 
     return {

@@ -1,6 +1,7 @@
 import argparse
 import json
 import csv
+from math import isfinite
 from pathlib import Path
 from urllib.request import urlopen
 from corners.extract import (
@@ -20,9 +21,25 @@ parser.add_argument(
     default=3857276,
     help="StatsBomb match ID; defaults to Canada–Morocco.",
 )
+parser.add_argument(
+    "--window",
+    choices=["10", "15", "20", "uncapped"],
+    default="15",
+    help="Corner outcome window in seconds, or uncapped.",
+)
+parser.add_argument(
+    "--short-limit",
+    type=float,
+    default=15,
+    help="Maximum ground-delivery distance for a short corner.",
+)
 args = parser.parse_args()
 if args.match_id <= 0:
     parser.error("--match-id must be positive")
+if not isfinite(args.short_limit) or args.short_limit <= 0:
+    parser.error("--short-limit must be positive and finite")
+MAX_SECONDS = None if args.window == "uncapped" else int(args.window)
+SHORT_LIMIT = args.short_limit
 MATCH_ID = args.match_id
 url = (
     "https://raw.githubusercontent.com/hudl/open-data/"
@@ -50,7 +67,12 @@ for corner in corners:
     print(f"{minute}:{second:02d} | {team} | {player}")
 
 project_folder = Path(__file__).resolve().parent.parent
-output_folder = project_folder / "outputs" / str(MATCH_ID)
+output_folder = (
+    project_folder
+    / "outputs"
+    / str(MATCH_ID)
+    / f"window_{args.window}_short_{SHORT_LIMIT:g}"
+)
 output_folder.mkdir(parents=True, exist_ok=True)
 output_file = output_folder / "sample_corners.csv"
 
@@ -116,7 +138,7 @@ for team, techniques in sorted(techniques_by_team.items()):
 
 print("\nOutcomes for every corner:")
 for corner in find_corners(events):
-    shots = find_corner_shots(events, corner)
+    shots = find_corner_shots(events, corner, max_seconds=MAX_SECONDS)
     goals = sum(
         shot["shot"].get("outcome", {}).get("name") == "Goal"
         for shot in shots
@@ -128,7 +150,12 @@ for corner in find_corners(events):
         f" | goals: {goals}"
     )
 
-summary_rows = build_corner_summaries(events, MATCH_ID)
+summary_rows = build_corner_summaries(
+    events,
+    MATCH_ID,
+    max_seconds=MAX_SECONDS,
+    short_limit=SHORT_LIMIT,
+)
 
 summary_file = output_folder / "corner_summary.csv"
 if summary_rows:
