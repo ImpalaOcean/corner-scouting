@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--match-id",
     type=int,
-    default=3857276,
+    default=None,
     help="StatsBomb match ID; defaults to Canada–Morocco.",
 )
 parser.add_argument(
@@ -33,23 +33,39 @@ parser.add_argument(
     default=15,
     help="Maximum ground-delivery distance for a short corner.",
 )
+parser.add_argument(
+    "--events",
+    type=Path,
+    help="Local StatsBomb event JSON file; otherwise download the sample.",
+)
 args = parser.parse_args()
-if args.match_id <= 0:
+if args.events is not None and args.match_id is None:
+    parser.error("--events requires the matching --match-id")
+MATCH_ID = args.match_id if args.match_id is not None else 3857276
+if MATCH_ID <= 0:
     parser.error("--match-id must be positive")
 if not isfinite(args.short_limit) or args.short_limit <= 0:
     parser.error("--short-limit must be positive and finite")
 MAX_SECONDS = None if args.window == "uncapped" else int(args.window)
 SHORT_LIMIT = args.short_limit
-MATCH_ID = args.match_id
 url = (
     "https://raw.githubusercontent.com/hudl/open-data/"
     f"master/data/events/{MATCH_ID}.json"
 )
 
-print("Downloading the sample match...")
-
-with urlopen(url, timeout=30) as response:
-    events = json.load(response)
+try:
+    if args.events is not None:
+        print(f"Reading local events: {args.events}")
+        with args.events.open("r", encoding="utf-8-sig") as file:
+            events = json.load(file)
+    else:
+        print(f"Downloading match {MATCH_ID}...")
+        with urlopen(url, timeout=30) as response:
+            events = json.load(response)
+    if not isinstance(events, list):
+        raise ValueError("Expected a JSON array of match events.")
+except (OSError, ValueError) as error:
+    parser.error(f"Could not load match events: {error}")
 
 corners = [
     event for event in find_corners(events)
