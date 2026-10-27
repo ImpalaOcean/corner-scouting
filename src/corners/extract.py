@@ -105,3 +105,42 @@ def extract_corner_sequence(events, corner, max_seconds=15):
 def find_corner_shots(events, corner, max_seconds=15):
     """Keep the existing interface for callers that only need shots."""
     return extract_corner_sequence(events, corner, max_seconds)["shots"]
+
+
+def describe_corner(corner, short_limit=15):
+    """Describe the delivery using the proposal's short-corner rule."""
+    from math import hypot, isfinite
+
+    if not isfinite(short_limit) or short_limit <= 0:
+        raise ValueError("Short-corner limit must be positive and finite.")
+    kind = corner["type"]["name"]
+    details = corner.get(kind.lower(), {})
+    start = corner.get("location") or []
+    end = details.get("end_location") or []
+    start_x = start[0] if len(start) >= 2 else None
+    start_y = start[1] if len(start) >= 2 else None
+    end_x = end[0] if len(end) >= 2 else None
+    end_y = end[1] if len(end) >= 2 else None
+    category = "unknown"
+    if kind == "Shot":
+        category = "direct_shot"
+    elif kind == "Pass":
+        coordinates = (start_x, start_y, end_x, end_y)
+        if (
+            details.get("height", {}).get("name") == "Ground Pass"
+            and all(value is not None and isfinite(value) for value in coordinates)
+            and hypot(end_x - start_x, end_y - start_y) <= short_limit
+        ):
+            category = "short"
+        else:
+            technique = details.get("technique", {}).get("name")
+            if technique in {"Inswinging", "Outswinging"}:
+                category = technique.lower()
+
+    return {
+        "delivery_category": category,
+        "start_x": start_x,
+        "start_y": start_y,
+        "end_x": end_x,
+        "end_y": end_y,
+    }

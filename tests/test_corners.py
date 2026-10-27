@@ -8,6 +8,7 @@ from corners.extract import (
     find_corners,
     find_corner_shots,
     extract_corner_sequence,
+    describe_corner,
 )
 
 
@@ -35,6 +36,45 @@ def shot(second=4):
 
 
 class CornerExtractionTests(unittest.TestCase):
+    def test_short_corner_distance_and_height(self):
+        delivery = corner()
+        delivery["location"] = [120, 0]
+        delivery["pass"].update({
+            "end_location": [108, 9],  # Exactly 15 units away.
+            "height": {"name": "Ground Pass"},
+        })
+        result = describe_corner(delivery)
+        self.assertEqual(result["delivery_category"], "short")
+        self.assertEqual(result["start_x"], 120)
+        self.assertEqual(result["end_y"], 9)
+        self.assertEqual(
+            describe_corner(delivery, short_limit=10)["delivery_category"],
+            "unknown",
+        )
+        delivery["pass"]["height"]["name"] = "High Pass"
+        self.assertEqual(describe_corner(delivery)["delivery_category"], "unknown")
+        for technique in ("Inswinging", "Outswinging"):
+            with self.subTest(technique=technique):
+                delivery["pass"]["technique"] = {"name": technique}
+                self.assertEqual(
+                    describe_corner(delivery)["delivery_category"], technique.lower()
+                )
+        for limit in (0, -1, float("inf"), float("nan")):
+            with self.subTest(limit=limit):
+                with self.assertRaises(ValueError):
+                    describe_corner(delivery, short_limit=limit)
+
+    def test_missing_coordinates_and_direct_shot(self):
+        delivery = corner()
+        delivery["pass"]["height"] = {"name": "Ground Pass"}
+        result = describe_corner(delivery)
+        for field in ("start_x", "start_y", "end_x", "end_y"):
+            self.assertIsNone(result[field])
+        self.assertEqual(result["delivery_category"], "unknown")
+        direct = shot()
+        direct["shot"]["type"] = {"name": "Corner"}
+        self.assertEqual(describe_corner(direct)["delivery_category"], "direct_shot")
+
     def test_sequence_records_ids_and_possession_boundary(self):
         delivery = corner()
         attempt = shot(4)

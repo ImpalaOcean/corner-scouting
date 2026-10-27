@@ -6,6 +6,7 @@ from corners.extract import (
     find_corners,
     find_corner_shots,
     extract_corner_sequence,
+    describe_corner,
 )
 
 MATCH_ID = 3857276
@@ -145,6 +146,7 @@ for corner in find_corners(events):
         "shot_event_ids": json.dumps([shot["id"] for shot in shots]),
         "stop_reason": sequence["stop_reason"],
         "chain_event_ids": json.dumps(sequence["chain_event_ids"]),
+        **describe_corner(corner),
     })
 
 summary_file = output_folder / "corner_summary.csv"
