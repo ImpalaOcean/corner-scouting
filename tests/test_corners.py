@@ -72,6 +72,10 @@ class CornerExtractionTests(unittest.TestCase):
         events = [delivery, boundary_shot, late_shot]
         self.assertEqual(find_corner_shots(events, delivery), [boundary_shot])
         self.assertEqual(find_corner_shots(events, delivery, max_seconds=10), [])
+        self.assertEqual(
+            find_corner_shots(events, delivery, max_seconds=None),
+            [boundary_shot, late_shot],
+        )
 
     def test_direct_corner_shot_counts_itself_and_follow_up(self):
         direct = shot(0)
@@ -80,6 +84,61 @@ class CornerExtractionTests(unittest.TestCase):
         self.assertEqual(
             find_corner_shots([direct, follow_up], direct), [direct, follow_up]
         )
+        self.assertEqual(
+            find_corner_shots([direct, direct.copy(), follow_up, follow_up.copy()], direct),
+            [direct, follow_up],
+        )
+        direct["shot"]["outcome"]["name"] = "Goal"
+        self.assertEqual(find_corner_shots([direct, follow_up], direct), [direct])
+
+    def test_stops_at_restarts_stoppages_and_ball_out(self):
+        boundaries = []
+        for restart_type in (
+            "Corner", "Free Kick", "Goal Kick", "Kick Off", "Throw-in", "Penalty"
+        ):
+            for kind in ("Pass", "Shot"):
+                restart = event(kind, 2)
+                restart[kind.lower()] = {"type": {"name": restart_type}}
+                boundaries.append(restart)
+        ball_out = event("Clearance", 2)
+        ball_out["out"] = True
+        boundaries.extend([
+            event("Foul Committed", 2),
+            event("Foul Won", 2),
+            event("Half End", 2),
+            event("Injury Stoppage", 2),
+            event("Offside", 2),
+            event("Referee Ball-Drop", 2),
+            ball_out,
+        ])
+        for boundary in boundaries:
+            with self.subTest(boundary=boundary):
+                delivery = corner()
+                self.assertEqual(
+                    find_corner_shots([delivery, boundary, shot(4)], delivery), []
+                )
+        for outcome, out in [("Goal", False), ("Wayward", True)]:
+            with self.subTest(outcome=outcome, out=out):
+                delivery = corner()
+                ending_shot = shot(2)
+                ending_shot["shot"]["outcome"]["name"] = outcome
+                ending_shot["out"] = out
+                self.assertEqual(
+                    find_corner_shots([delivery, ending_shot, shot(4)], delivery),
+                    [ending_shot],
+                )
+
+    def test_advantage_does_not_stop_play(self):
+        for kind in ("Foul Committed", "Foul Won"):
+            with self.subTest(kind=kind):
+                delivery = corner()
+                foul = event(kind, 2)
+                foul[kind.lower().replace(" ", "_")] = {"advantage": True}
+                follow_up = shot(4)
+                self.assertEqual(
+                    find_corner_shots([delivery, foul, follow_up], delivery),
+                    [follow_up],
+                )
 
 
 if __name__ == "__main__":
