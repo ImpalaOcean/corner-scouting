@@ -2,7 +2,11 @@ import json
 import csv
 from pathlib import Path
 from urllib.request import urlopen
-from corners.extract import find_corners, find_corner_shots
+from corners.extract import (
+    find_corners,
+    find_corner_shots,
+    extract_corner_sequence,
+)
 
 MATCH_ID = 3857276
 url = (
@@ -111,7 +115,8 @@ for corner in find_corners(events):
 
 summary_rows = []
 for corner in find_corners(events):
-    shots = find_corner_shots(events, corner)
+    sequence = extract_corner_sequence(events, corner)
+    shots = sequence["shots"]
     corner_kind = corner["type"]["name"]
     delivery = corner[corner_kind.lower()]
     summary_rows.append({
@@ -138,6 +143,8 @@ for corner in find_corners(events):
             for shot in shots
         ),
         "shot_event_ids": json.dumps([shot["id"] for shot in shots]),
+        "stop_reason": sequence["stop_reason"],
+        "chain_event_ids": json.dumps(sequence["chain_event_ids"]),
     })
 
 summary_file = output_folder / "corner_summary.csv"

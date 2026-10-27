@@ -4,7 +4,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from corners.extract import find_corners, find_corner_shots
+from corners.extract import (
+    find_corners,
+    find_corner_shots,
+    extract_corner_sequence,
+)
 
 
 def event(kind, second, possession=17, team=1, period=1):
@@ -31,6 +35,31 @@ def shot(second=4):
 
 
 class CornerExtractionTests(unittest.TestCase):
+    def test_sequence_records_ids_and_possession_boundary(self):
+        delivery = corner()
+        attempt = shot(4)
+        boundary = event("Pass", 6, possession=18)
+        result = extract_corner_sequence(
+            [delivery, attempt, boundary], delivery
+        )
+        self.assertEqual(
+            result["chain_event_ids"], [delivery["id"], attempt["id"]]
+        )
+        self.assertEqual(result["stop_reason"], "possession_change")
+
+    def test_sequence_records_terminal_goal(self):
+        delivery = corner()
+        attempt = shot(4)
+        attempt["shot"]["outcome"]["name"] = "Goal"
+        result = extract_corner_sequence(
+            [delivery, attempt, shot(6)], delivery
+        )
+        self.assertEqual(result["shots"], [attempt])
+        self.assertEqual(result["stop_reason"], "goal")
+        self.assertEqual(
+            result["chain_event_ids"], [delivery["id"], attempt["id"]]
+        )
+
     def test_identifies_corners_and_deduplicates_ids(self):
         delivery = corner()
         direct = shot()
