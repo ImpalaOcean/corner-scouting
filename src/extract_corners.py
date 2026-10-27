@@ -1,3 +1,4 @@
+import argparse
 import json
 import csv
 from pathlib import Path
@@ -10,7 +11,19 @@ from corners.extract import (
     build_corner_summaries,
 )
 
-MATCH_ID = 3857271
+parser = argparse.ArgumentParser(
+    description="Extract corners and outcomes from a StatsBomb match."
+)
+parser.add_argument(
+    "--match-id",
+    type=int,
+    default=3857276,
+    help="StatsBomb match ID; defaults to Canada–Morocco.",
+)
+args = parser.parse_args()
+if args.match_id <= 0:
+    parser.error("--match-id must be positive")
+MATCH_ID = args.match_id
 url = (
     "https://raw.githubusercontent.com/hudl/open-data/"
     f"master/data/events/{MATCH_ID}.json"
@@ -37,7 +50,7 @@ for corner in corners:
     print(f"{minute}:{second:02d} | {team} | {player}")
 
 project_folder = Path(__file__).resolve().parent.parent
-output_folder = project_folder / "outputs"
+output_folder = project_folder / "outputs" / str(MATCH_ID)
 output_folder.mkdir(parents=True, exist_ok=True)
 output_file = output_folder / "sample_corners.csv"
 
