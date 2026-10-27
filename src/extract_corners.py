@@ -10,7 +10,7 @@ from corners.extract import (
     build_corner_summaries,
 )
 
-MATCH_ID = 3857276
+MATCH_ID = 3857271
 url = (
     "https://raw.githubusercontent.com/hudl/open-data/"
     f"master/data/events/{MATCH_ID}.json"
