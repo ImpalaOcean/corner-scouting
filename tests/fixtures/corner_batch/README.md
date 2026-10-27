@@ -1,0 +1,1 @@
+Entirely invented development data. IDs, teams, competition, season and date are synthetic. These are not StatsBomb observations or research evidence. The fixture covers one corner with a subsequent shot plus one zero-corner match.

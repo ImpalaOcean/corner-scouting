@@ -117,9 +117,13 @@ It is not a drop-in replacement. In particular, team versus team_name and
 corner_event_id versus event_id need an agreed mapping. Do not change shared
 fixtures or teammates' consumers silently.
 
-Remaining integration/research work: match metadata, batch/corpus execution,
-Parquet, source-revision/hash provenance, the independent 100-sequence audit,
-corpus sensitivity results, and extraction methods/results for the paper.
+Metadata, local batch execution, typed Parquet and per-file hash provenance are
+now implemented in the additional batch runner. See [BATCH.md](BATCH.md) for
+input formats, installation, commands and validation. The old sample runner
+behavior described above is unchanged. Remaining work: team interface approval,
+actual corpus execution/validation, the independent 100-sequence audit, corpus
+sensitivity results and extraction methods/results for the paper.
 
 Data source: https://github.com/hudl/open-data. Follow StatsBomb attribution and
 usage terms for published outputs. Raw files and generated outputs stay out of Git.
+

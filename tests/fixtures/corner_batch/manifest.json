@@ -1,0 +1,22 @@
+{
+  "matches": [
+    {
+      "match_id": 1,
+      "events": "events.json",
+      "metadata": {
+        "match_id": 1,
+        "competition_id": 999,
+        "competition_name": "Synthetic League",
+        "season_id": 999,
+        "season": "Synthetic Season",
+        "match_date": "2026-01-01",
+        "home_team": "Example A",
+        "away_team": "Example B"
+      }
+    },
+    {
+      "match_id": 2,
+      "events": "empty.json"
+    }
+  ]
+}
