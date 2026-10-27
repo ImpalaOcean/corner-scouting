@@ -9,6 +9,7 @@ from corners.extract import (
     find_corner_shots,
     extract_corner_sequence,
     describe_corner,
+    build_corner_summaries,
 )
 
 
@@ -36,6 +37,27 @@ def shot(second=4):
 
 
 class CornerExtractionTests(unittest.TestCase):
+    def test_builds_one_summary_per_corner(self):
+        delivery = corner()
+        attempt = shot(4)
+        attempt["shot"]["statsbomb_xg"] = 0.12
+        rows = build_corner_summaries([delivery, attempt], match_id=123)
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row["match_id"], 123)
+        self.assertEqual(row["corner_event_id"], delivery["id"])
+        self.assertEqual(row["shot_count"], 1)
+        self.assertEqual(row["goal_count"], 0)
+        self.assertTrue(row["led_to_shot"])
+        self.assertAlmostEqual(row["provider_xg_sum"], 0.12)
+        self.assertEqual(row["shot_event_ids"], [attempt["id"]])
+        self.assertEqual(
+            row["chain_event_ids"], [delivery["id"], attempt["id"]]
+        )
+        self.assertEqual(row["stop_reason"], "end_of_data")
+        self.assertEqual(row["window_seconds"], 15)
+        self.assertEqual(row["short_limit"], 15)
+
     def test_short_corner_distance_and_height(self):
         delivery = corner()
         delivery["location"] = [120, 0]

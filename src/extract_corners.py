@@ -7,6 +7,7 @@ from corners.extract import (
     find_corner_shots,
     extract_corner_sequence,
     describe_corner,
+    build_corner_summaries,
 )
 
 MATCH_ID = 3857276
@@ -114,40 +115,7 @@ for corner in find_corners(events):
         f" | goals: {goals}"
     )
 
-summary_rows = []
-for corner in find_corners(events):
-    sequence = extract_corner_sequence(events, corner)
-    shots = sequence["shots"]
-    corner_kind = corner["type"]["name"]
-    delivery = corner[corner_kind.lower()]
-    summary_rows.append({
-        "match_id": MATCH_ID,
-        "corner_event_id": corner["id"],
-        "team_id": corner["team"]["id"],
-        "team": corner["team"]["name"],
-        "taker": corner.get("player", {}).get("name", "Unknown"),
-        "period": corner["period"],
-        "timestamp": corner["timestamp"],
-        "possession_id": corner["possession"],
-        "corner_kind": corner_kind,
-        "technique": delivery.get("technique", {}).get("name", "Unknown"),
-        "foot": delivery.get("body_part", {}).get("name", "Unknown"),
-        "height": delivery.get("height", {}).get("name", "Unknown"),
-        "shot_count": len(shots),
-        "goal_count": sum(
-            shot["shot"].get("outcome", {}).get("name") == "Goal"
-            for shot in shots
-        ),
-        "led_to_shot": bool(shots),
-        "provider_xg_sum": sum(
-            shot["shot"].get("statsbomb_xg", 0) or 0
-            for shot in shots
-        ),
-        "shot_event_ids": json.dumps([shot["id"] for shot in shots]),
-        "stop_reason": sequence["stop_reason"],
-        "chain_event_ids": json.dumps(sequence["chain_event_ids"]),
-        **describe_corner(corner),
-    })
+summary_rows = build_corner_summaries(events, MATCH_ID)
 
 summary_file = output_folder / "corner_summary.csv"
 if summary_rows:
@@ -159,5 +127,10 @@ if summary_rows:
             fieldnames=list(summary_rows[0].keys()),
         )
         writer.writeheader()
-        writer.writerows(summary_rows)
+        for row in summary_rows:
+            csv_row = {
+                key: json.dumps(value) if isinstance(value, list) else value
+                for key, value in row.items()
+            }
+            writer.writerow(csv_row)
     print(f"Saved {len(summary_rows)} corner outcomes to {summary_file}")

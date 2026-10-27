@@ -144,3 +144,48 @@ def describe_corner(corner, short_limit=15):
         "end_x": end_x,
         "end_y": end_y,
     }
+
+
+def build_corner_summaries(events, match_id, max_seconds=15, short_limit=15):
+    """Build corner summary dictionaries without downloading or writing data."""
+    rows = []
+    for corner in find_corners(events):
+        sequence = extract_corner_sequence(
+            events, corner, max_seconds=max_seconds
+        )
+        shots = sequence["shots"]
+        corner_kind = corner["type"]["name"]
+        delivery = corner[corner_kind.lower()]
+        rows.append({
+            "match_id": match_id,
+            "corner_event_id": corner["id"],
+            "team_id": corner["team"]["id"],
+            "team": corner["team"].get("name", "Unknown"),
+            "taker": corner.get("player", {}).get("name", "Unknown"),
+            "period": corner["period"],
+            "timestamp": corner["timestamp"],
+            "minute": corner.get("minute"),
+            "second": corner.get("second"),
+            "possession_id": corner["possession"],
+            "corner_kind": corner_kind,
+            "technique": delivery.get("technique", {}).get("name", "Unknown"),
+            "foot": delivery.get("body_part", {}).get("name", "Unknown"),
+            "height": delivery.get("height", {}).get("name", "Unknown"),
+            **describe_corner(corner, short_limit=short_limit),
+            "shot_count": len(shots),
+            "goal_count": sum(
+                shot["shot"].get("outcome", {}).get("name") == "Goal"
+                for shot in shots
+            ),
+            "led_to_shot": bool(shots),
+            "provider_xg_sum": sum(
+                shot["shot"].get("statsbomb_xg", 0) or 0
+                for shot in shots
+            ),
+            "shot_event_ids": [shot["id"] for shot in shots],
+            "chain_event_ids": sequence["chain_event_ids"],
+            "stop_reason": sequence["stop_reason"],
+            "window_seconds": max_seconds,
+            "short_limit": short_limit,
+        })
+    return rows
