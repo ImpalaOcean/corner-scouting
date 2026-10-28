@@ -1,26 +1,75 @@
+import argparse
 import json
 import csv
+from math import isfinite
 from pathlib import Path
 from urllib.request import urlopen
+from corners.extract import (
+    find_corners,
+    find_corner_shots,
+    extract_corner_sequence,
+    describe_corner,
+    build_corner_summaries,
+)
 
-MATCH_ID = 3857276
+parser = argparse.ArgumentParser(
+    description="Extract corners and outcomes from a StatsBomb match."
+)
+parser.add_argument(
+    "--match-id",
+    type=int,
+    default=None,
+    help="StatsBomb match ID; defaults to Canada–Morocco.",
+)
+parser.add_argument(
+    "--window",
+    choices=["10", "15", "20", "uncapped"],
+    default="15",
+    help="Corner outcome window in seconds, or uncapped.",
+)
+parser.add_argument(
+    "--short-limit",
+    type=float,
+    default=15,
+    help="Maximum ground-delivery distance for a short corner.",
+)
+parser.add_argument(
+    "--events",
+    type=Path,
+    help="Local StatsBomb event JSON file; otherwise download the sample.",
+)
+args = parser.parse_args()
+if args.events is not None and args.match_id is None:
+    parser.error("--events requires the matching --match-id")
+MATCH_ID = args.match_id if args.match_id is not None else 3857276
+if MATCH_ID <= 0:
+    parser.error("--match-id must be positive")
+if not isfinite(args.short_limit) or args.short_limit <= 0:
+    parser.error("--short-limit must be positive and finite")
+MAX_SECONDS = None if args.window == "uncapped" else int(args.window)
+SHORT_LIMIT = args.short_limit
 url = (
     "https://raw.githubusercontent.com/hudl/open-data/"
     f"master/data/events/{MATCH_ID}.json"
 )
 
-print("Downloading the sample match...")
-
-with urlopen(url, timeout=30) as response:
-    events = json.load(response)
+try:
+    if args.events is not None:
+        print(f"Reading local events: {args.events}")
+        with args.events.open("r", encoding="utf-8-sig") as file:
+            events = json.load(file)
+    else:
+        print(f"Downloading match {MATCH_ID}...")
+        with urlopen(url, timeout=30) as response:
+            events = json.load(response)
+    if not isinstance(events, list):
+        raise ValueError("Expected a JSON array of match events.")
+except (OSError, ValueError) as error:
+    parser.error(f"Could not load match events: {error}")
 
 corners = [
-    event
-    for event in events
-    if (
-        event.get("type", {}).get("name") == "Pass"
-        and event.get("pass", {}).get("type", {}).get("name") == "Corner"
-    )
+    event for event in find_corners(events)
+    if event["type"]["name"] == "Pass"
 ]
 
 print(f"Found {len(corners)} corner deliveries.")
@@ -34,7 +83,12 @@ for corner in corners:
     print(f"{minute}:{second:02d} | {team} | {player}")
 
 project_folder = Path(__file__).resolve().parent.parent
-output_folder = project_folder / "outputs"
+output_folder = (
+    project_folder
+    / "outputs"
+    / str(MATCH_ID)
+    / f"window_{args.window}_short_{SHORT_LIMIT:g}"
+)
 output_folder.mkdir(parents=True, exist_ok=True)
 output_file = output_folder / "sample_corners.csv"
 
@@ -98,54 +152,41 @@ for team, techniques in sorted(techniques_by_team.items()):
         percentage = count / total * 100
         print(f"  {technique}: {count} ({percentage:.1f}%)")
 
-print("\nPossession identifiers for each corner:")
-for corner in corners:
+print("\nOutcomes for every corner:")
+for corner in find_corners(events):
+    shots = find_corner_shots(events, corner, max_seconds=MAX_SECONDS)
+    goals = sum(
+        shot["shot"].get("outcome", {}).get("name") == "Goal"
+        for shot in shots
+    )
     print(
         f"{corner['minute']}:{corner['second']:02d}"
         f" | {corner['team']['name']}"
-        f" | possession: {corner.get('possession', 'Missing')}"
+        f" | shots: {len(shots)}"
+        f" | goals: {goals}"
     )
 
-first_corner = corners[0]
-for index, event in enumerate(events):
-    if event["id"] == first_corner["id"]:
-        print("\nActions after the first corner:")
-        for action in events[index:index + 11]:
-            print(
-                action["timestamp"],
-                "|",
-                action["type"]["name"],
-                "|",
-                action.get("team", {}).get("name", "Unknown"),
-                "| possession:",
-                action.get("possession", "Missing"),
-            )
-        break
-
-def timestamp_seconds(timestamp):
-    hours, minutes, seconds = timestamp.split(":")
-    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
-
-first_corner = corners[0]
-start_time = timestamp_seconds(first_corner["timestamp"])
-corner_index = next(
-    index
-    for index, event in enumerate(events)
-    if event["id"] == first_corner["id"]
+summary_rows = build_corner_summaries(
+    events,
+    MATCH_ID,
+    max_seconds=MAX_SECONDS,
+    short_limit=SHORT_LIMIT,
 )
 
-print("\nShots following the first corner:")
-for action in events[corner_index + 1:]:
-    if action["period"] != first_corner["period"]:
-        break
-    if action.get("possession") != first_corner["possession"]:
-        break
-    elapsed = timestamp_seconds(action["timestamp"]) - start_time
-    if elapsed > 15:
-        break
-    if (
-        action["type"]["name"] == "Shot"
-        and action["team"]["id"] == first_corner["team"]["id"]
-    ):
-        outcome = action["shot"]["outcome"]["name"]
-        print(f"Shot after {elapsed:.2f} seconds | {outcome}")
+summary_file = output_folder / "corner_summary.csv"
+if summary_rows:
+    with summary_file.open(
+        "w", newline="", encoding="utf-8-sig"
+    ) as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=list(summary_rows[0].keys()),
+        )
+        writer.writeheader()
+        for row in summary_rows:
+            csv_row = {
+                key: json.dumps(value) if isinstance(value, list) else value
+                for key, value in row.items()
+            }
+            writer.writerow(csv_row)
+    print(f"Saved {len(summary_rows)} corner outcomes to {summary_file}")
