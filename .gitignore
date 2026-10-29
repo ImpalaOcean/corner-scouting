@@ -66,5 +66,5 @@ profile_default/
 *.sqlite3
 
 # data and outputs
-data/
-outputs/
+/data/
+/outputs/
