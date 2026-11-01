@@ -1,86 +1,77 @@
-"""Extract static setup features from 360 freeze frames."""
+"""Per-corner static features from one 360 freeze frame."""
 
-def normalize_coordinates(x, y, is_left_corner):
-    """
-    Normalize coordinates so all corners are viewed as if taken from the right.
-    StatsBomb coordinates: X goes 0 to 120 (left to right), Y goes 0 to 80 (bottom to top).
-    Right corner is at X=120, Y=80. Left corner is at X=120, Y=0.
-    """
-    if is_left_corner:
-        return x, 80.0 - y
-    return x, y
+from .geometry import (
+    BOX_X0, BOX_X1, BOX_Y0, BOX_Y1, corner_side, coverage, mirror_y, zone_of,
+    zone_rect,
+)
 
-def assign_zone(x, y):
-    """
-    Divide the attacking third/penalty box area into 9 zones based on X and Y.
-    X ranges from 102 to 120 (the 18-yard box starts at 102). We'll use 100 to 120.
-    Y ranges from 0 to 80.
-    Returns a zone number from 1 to 9.
-    """
-    if x < 102:
-        return 0 # Outside the box
-        
-    # X columns: Near (114-120), Central (108-114), Far (102-108)
-    if x >= 114:
-        col = 0
-    elif x >= 108:
-        col = 1
-    else:
-        col = 2
-        
-    # Y rows: Bottom (0-26.6), Middle (26.6-53.3), Top (53.3-80)
-    if y < 26.66:
-        row = 0
-    elif y < 53.33:
-        row = 1
-    else:
-        row = 2
-        
-    return (col * 3) + row + 1
+ZONES = range(1, 10)
 
-def extract_frame_features(frame, corner_side):
+
+def polygon_points(flat):
+    """[x0, y0, x1, y1, ...] -> [(x0, y0), ...]."""
+    return [(float(flat[i]), float(flat[i + 1])) for i in range(0, len(flat) - 1, 2)]
+
+
+def frame_features(frame, start_y):
+    """Features for one corner. Returns None if the corner side is unknown.
+
+    Attackers are the actor's teammates (teammate=True). The actor (corner
+    taker) and keepers are excluded from the attacker/defender counts and from
+    the outfield zone counts; keepers are reported separately. Bottom corners
+    (y<40) are mirrored so every corner is analysed as if taken from the top
+    touchline (y=80).
     """
-    Process a single 360 frame and return counts and zone occupancy.
-    corner_side: 'left' or 'right' based on the corner location.
-    """
-    if not frame or "freeze_frame" not in frame:
+    side = corner_side(start_y)
+    if side is None:
         return None
-        
-    is_left = (corner_side == "left")
-    
-    att_count = 0
-    def_count = 0
-    keeper_count = 0
-    zone_occupancy = {i: {"att": 0, "def": 0} for i in range(1, 10)}
-    
-    for player in frame["freeze_frame"]:
-        x, y = player["location"]
-        is_teammate = player["teammate"]
-        is_keeper = player["keeper"]
-        
-        # Normalize coordinates
-        norm_x, norm_y = normalize_coordinates(x, y, is_left)
-        
-        if is_keeper:
-            keeper_count += 1
-            
-        if is_teammate:
-            att_count += 1
+    flip = side == "bottom"
+
+    def norm(point):
+        x, y = point
+        return (x, mirror_y(y)) if flip else (x, y)
+
+    att = {z: 0 for z in ZONES}
+    dfn = {z: 0 for z in ZONES}
+    visible = attackers = defenders = 0
+    keeper_zone = None
+    keepers = 0
+    for p in frame["freeze_frame"]:
+        visible += 1
+        if p["actor"]:
+            continue
+        x, y = norm(p["location"][:2])
+        zone = zone_of(x, y)
+        if p["keeper"]:
+            keepers += 1
+            if not p["teammate"]:
+                keeper_zone = zone if zone is not None else 0
+            continue
+        if p["teammate"]:
+            attackers += 1
         else:
-            def_count += 1
-            
-        # Assign to zone (ignore zones outside the box for now)
-        zone = assign_zone(norm_x, norm_y)
-        if zone > 0:
-            if is_teammate:
-                zone_occupancy[zone]["att"] += 1
-            else:
-                zone_occupancy[zone]["def"] += 1
-                
+            defenders += 1
+        if zone is not None:
+            (att if p["teammate"] else dfn)[zone] += 1
+
+    polygon = [norm(pt) for pt in polygon_points(frame["visible_area"])]
+    box = (BOX_X0, BOX_Y0, BOX_X1, BOX_Y1)
     return {
-        "total_visible": att_count + def_count,
-        "attackers": att_count,
-        "defenders": def_count,
-        "keepers": keeper_count,
-        "zones": zone_occupancy
+        "corner_side": side,
+        "visible_players": visible,
+        "visible_attackers": attackers,
+        "visible_defenders": defenders,
+        "visible_keepers": keepers,
+        "box_coverage": round(coverage(polygon, box), 4),
+        "zone_coverage": {z: round(coverage(polygon, zone_rect(z)), 4) for z in ZONES},
+        "att_zone": att,
+        "def_zone": dfn,
+        "att_in_box": sum(att.values()),
+        "def_in_box": sum(dfn.values()),
+        "keeper_zone": keeper_zone,
     }
+
+
+def vector(features):
+    """18-number setup vector: attackers per zone then defenders per zone."""
+    return [features["att_zone"][z] for z in ZONES] + [features["def_zone"][z] for z in ZONES]

@@ -1,50 +1,63 @@
-"""Load and join 360 data with corner events."""
+"""Read Diego's corner table and StatsBomb 360 files. Read-only; nothing is
+downloaded here (Ebtesam's loader in src/data provides the 360 files)."""
+
+import csv
+from math import isfinite
 import json
 from pathlib import Path
 
-def load_360_frames(filepath):
-    """Read a StatsBomb 360 JSON file and index it by event_uuid."""
-    path = Path(filepath)
-    if not path.exists():
-        return {}
-    
-    with path.open("r", encoding="utf-8-sig") as f:
-        frames = json.load(f)
-        
-    # We only care about frames that actually have freeze_frame data
-    indexed = {}
-    for frame in frames:
-        if "event_uuid" in frame and "freeze_frame" in frame:
-            indexed[frame["event_uuid"]] = frame
-            
-    return indexed
+REQUIRED_COLUMNS = ("match_id", "corner_event_id", "start_x", "start_y")
 
-def join_corners_and_360(corners_csv_path, raw_360_dir):
-    """
-    Read the corner summary CSV and attach the corresponding 360 frame.
-    Returns a list of joined dictionaries.
-    """
-    import csv
-    joined_data = []
-    
-    # We will build a cache of 360 files so we don't read the same file twice
-    frame_cache = {}
-    
-    with open(corners_csv_path, "r", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            match_id = str(row["match_id"])
-            corner_id = row["corner_event_id"]
-            
-            # Load the 360 file for this match if we haven't already
-            if match_id not in frame_cache:
-                path = Path(raw_360_dir) / f"{match_id}.json"
-                frame_cache[match_id] = load_360_frames(path)
-                
-            match_frames = frame_cache[match_id]
-            
-            # Attach the frame if it exists
-            row["frame_360"] = match_frames.get(corner_id, None)
-            joined_data.append(row)
-            
-    return joined_data
+
+def number(value):
+    """Blank or non-numeric -> None; otherwise a finite float."""
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        result = float(value)
+    except ValueError:
+        return None
+    return result if isfinite(result) else None
+
+
+def read_corner_table(path):
+    """Rows of a corner_summary.csv (any extra columns are kept as text)."""
+    with Path(path).open(newline="", encoding="utf-8-sig") as stream:
+        reader = csv.DictReader(stream)
+        missing = [c for c in REQUIRED_COLUMNS if c not in (reader.fieldnames or [])]
+        if missing:
+            raise ValueError(f"Corner table lacks columns: {missing}")
+        rows = list(reader)
+    seen = set()
+    for row in rows:
+        key = (str(row["match_id"]).strip(), row["corner_event_id"].strip())
+        if not key[0] or not key[1]:
+            raise ValueError("Corner table has a blank match_id or corner_event_id")
+        if key in seen:
+            raise ValueError(f"Duplicate corner in table: {key}")
+        seen.add(key)
+        row["match_id"], row["corner_event_id"] = key
+        row["start_x"], row["start_y"] = number(row["start_x"]), number(row["start_y"])
+    return rows
+
+
+def read_frames(directory, match_ids):
+    """{match_id: {event_uuid: frame}} for each match. A match whose 360 file
+    does not exist maps to None (that is normal: not every match has 360)."""
+    result = {}
+    for match_id in sorted(set(match_ids)):
+        path = Path(directory) / f"{match_id}.json"
+        if not path.is_file():
+            result[match_id] = None
+            continue
+        with path.open(encoding="utf-8-sig") as stream:
+            frames = json.load(stream)
+        if not isinstance(frames, list):
+            raise ValueError(f"{path.name}: expected a JSON array of frames")
+        indexed = {}
+        for frame in frames:
+            uuid = frame.get("event_uuid") if isinstance(frame, dict) else None
+            if isinstance(uuid, str) and uuid and uuid not in indexed:
+                indexed[uuid] = frame
+        result[match_id] = indexed
+    return result
