@@ -3,7 +3,8 @@
 from math import isfinite
 
 from .cluster import kmeans, stability
-from .features import ZONES, frame_features, vector
+from .features import ZONES, frame_features, polygon_points, vector
+from .geometry import corner_side, polygon_area
 
 ROW_FIELDS = (
     ["match_id", "corner_event_id", "team_id", "team", "status", "exclusion_reason",
@@ -13,10 +14,11 @@ ROW_FIELDS = (
 )
 
 REASONS = ("no_360_file", "no_360_frame", "invalid_frame", "no_corner_location",
-           "low_visibility", "too_few_visible_players")
+           "invalid_corner_location", "low_visibility", "too_few_visible_players")
 
 DEFAULTS = dict(k=4, min_box_coverage=0.5, min_visible_players=5,
-                min_corners_confident=100, stability_threshold=0.6, seed=0)
+                min_corners_confident=100, min_cluster_size=10,
+                stability_threshold=0.6, seed=0)
 
 
 def frame_problem(frame):
@@ -28,6 +30,9 @@ def frame_problem(frame):
         return "freeze_frame/visible_area missing"
     if len(area) % 2 or not all(ok_num(v) for v in area):
         return "bad visible_area"
+    outline = polygon_points(area)
+    if len(outline) < 3 or polygon_area(outline) <= 1e-9:
+        return "degenerate visible_area"
     for p in players:
         loc = p.get("location") if isinstance(p, dict) else None
         if not (isinstance(loc, list) and len(loc) >= 2 and all(ok_num(v) for v in loc[:2])):
@@ -37,13 +42,14 @@ def frame_problem(frame):
     return None
 
 
-def corner_y(row, frame):
-    """Corner-flag y from the corner table, else from the actor in the frame."""
-    if row["start_y"] is not None:
-        return row["start_y"]
+def corner_location(row, frame):
+    """(x, y) of the corner: from the corner table when both values are present,
+    otherwise from the corner taker in the frame; None if neither exists."""
+    if row["start_x"] is not None and row["start_y"] is not None:
+        return row["start_x"], row["start_y"]
     for p in frame["freeze_frame"]:
         if p["actor"]:
-            return p["location"][1]
+            return p["location"][0], p["location"][1]
     return None
 
 
@@ -69,10 +75,14 @@ def build_setups(corners, frames_by_match, **options):
         if frame_problem(frame):
             row["exclusion_reason"] = "invalid_frame"
             continue
-        feats = frame_features(frame, corner_y(corner, frame))
-        if feats is None:
+        location = corner_location(corner, frame)
+        if location is None:
             row["exclusion_reason"] = "no_corner_location"
             continue
+        if corner_side(location[1], location[0]) is None:
+            row["exclusion_reason"] = "invalid_corner_location"
+            continue
+        feats = frame_features(frame, location[1], location[0])
         row.update({k: feats[k] for k in (
             "corner_side", "visible_players", "visible_attackers", "visible_defenders",
             "visible_keepers", "box_coverage", "att_in_box", "def_in_box")})
@@ -103,16 +113,24 @@ def build_setups(corners, frames_by_match, **options):
     if len(usable) < cfg["min_corners_confident"]:
         caveats.append(f"only {len(usable)} corners with usable 360 "
                        f"(< {cfg['min_corners_confident']})")
-    if stab is None and k_used >= 2:
-        caveats.append("too few corners to test stability")
-    elif stab is not None and stab < cfg["stability_threshold"]:
+    if stab is None:
+        if k_used >= 2:
+            caveats.append("too few corners to test stability")
+        elif usable:
+            caveats.append("only one setup group found; stability cannot be estimated")
+    elif stab < cfg["stability_threshold"]:
         caveats.append(f"stability {stab} below {cfg['stability_threshold']}")
+    small = [c for c in range(k_used) if labels.count(c) < cfg["min_cluster_size"]]
+    if small:
+        caveats.append(f"clusters {small} have fewer than "
+                       f"{cfg['min_cluster_size']} corners")
     if not usable:
         caveats.append("no usable 360 corners")
     clusters = []
     for c, centre in enumerate(centers):
         clusters.append(dict(
             cluster_id=c, size=labels.count(c),
+            meets_min_size=labels.count(c) >= cfg["min_cluster_size"],
             mean_attackers_by_zone={z: round(centre[z - 1], 3) for z in ZONES},
             mean_defenders_by_zone={z: round(centre[9 + z - 1], 3) for z in ZONES}))
     report = dict(

@@ -36,8 +36,11 @@ class GeometryTests(unittest.TestCase):
     def test_corner_side_and_mirroring(self):
         self.assertEqual(corner_side(80), "top")
         self.assertEqual(corner_side(0.1), "bottom")
-        self.assertEqual(corner_side(39.9), "bottom")
+        self.assertIsNone(corner_side(39.9))      # mid-pitch is not a corner
         self.assertIsNone(corner_side(None))
+        for x, y in [(120, 40), (60, 80), (120, 500), (120, -5), (0, 0),
+                     (120, float("nan")), (float("inf"), 80), (120, True)]:
+            self.assertIsNone(corner_side(y, x), (x, y))
         self.assertEqual(mirror_y(20), 60)
 
     def test_coverage_fraction(self):
@@ -198,7 +201,79 @@ class PipelineTests(unittest.TestCase):
             path.write_text("match_id,corner_event_id\n1,a\n")
             with self.assertRaises(ValueError):
                 read_corner_table(path)
+                
+    def _corners(self, n):
+        return [dict(match_id="1", corner_event_id=f"c{i}", team_id="1", team="A",
+                     start_x=120.0, start_y=80.0) for i in range(n)]
 
+    def _frame(self, uuid, players=None, area=FULL):
+        players = players or [player(120, 80, actor=True)] + [
+            player(105 + i % 10, 25 + i, i % 2 == 0) for i in range(10)]
+        return dict(event_uuid=uuid, visible_area=area, freeze_frame=players)
+
+    def test_identical_setups_are_exploratory_without_stability(self):
+        corners = self._corners(100)
+        frames = {"1": {c["corner_event_id"]: self._frame(c["corner_event_id"])
+                        for c in corners}}
+        _, report = build_setups(corners, frames, k=2)
+        self.assertIsNone(report["stability_ari"])
+        self.assertEqual(report["clusters_found"], 1)
+        self.assertTrue(report["exploratory"])
+        self.assertTrue(any("stability" in c for c in report["caveats"]))
+
+    def test_tiny_cluster_makes_result_exploratory(self):
+        corners = self._corners(30)
+        odd = [player(120, 80, actor=True)] + [player(103, 60)] * 9 + [player(104, 20, False)]
+        frames = {"1": {c["corner_event_id"]: self._frame(
+            c["corner_event_id"], odd if c["corner_event_id"] == "c0" else None)
+            for c in corners}}
+        _, report = build_setups(corners, frames, k=2, min_corners_confident=30)
+        self.assertEqual([c["size"] for c in report["clusters"]], [29, 1])
+        self.assertEqual([c["meets_min_size"] for c in report["clusters"]], [True, False])
+        self.assertTrue(report["exploratory"])
+        self.assertTrue(any("fewer than" in c for c in report["caveats"]))
+
+    def test_healthy_large_run_is_not_exploratory(self):
+        corners = self._corners(120)
+        other = ([player(120, 80, actor=True)] + [player(104, 60)] * 5
+                 + [player(112, 40, False)] * 5)
+        frames = {"1": {c["corner_event_id"]: self._frame(
+            c["corner_event_id"], other if i % 2 else None)
+            for i, c in enumerate(corners)}}
+        _, report = build_setups(corners, frames, k=2)
+        self.assertFalse(report["exploratory"], report["caveats"])
+        self.assertEqual(report["stability_ari"], 1.0)
+
+    def test_degenerate_visible_areas_are_invalid_even_with_zero_threshold(self):
+        for name, area in [("empty", []), ("two points", [60, 0, 120, 80]),
+                           ("zero area", [0, 0, 50, 50, 100, 100])]:
+            with self.subTest(name):
+                frames = {"1": {"c0": self._frame("c0", area=area)}}
+                rows, _ = build_setups(self._corners(1), frames,
+                                       min_box_coverage=0.0, min_visible_players=1)
+                self.assertEqual(rows[0]["status"], "excluded")
+                self.assertEqual(rows[0]["exclusion_reason"], "invalid_frame")
+
+    def test_invalid_corner_coordinates_are_excluded(self):
+        for x, y in [(120, 40), (60, 80), (120, 500), (120, -5), (0, 0),
+                     (120, float("nan"))]:
+            with self.subTest(x=x, y=y):
+                corners = self._corners(1)
+                corners[0].update(start_x=x, start_y=y)
+                rows, _ = build_setups(corners, {"1": {"c0": self._frame("c0")}})
+                self.assertEqual(rows[0]["status"], "excluded")
+                self.assertEqual(rows[0]["exclusion_reason"], "invalid_corner_location")
+
+    def test_unparseable_table_coordinates_are_invalid_not_blank(self):
+        from src.setups.loader import number
+        self.assertIsNone(number(""))
+        self.assertNotEqual(number("abc"), number("abc"))       # nan
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "c.csv"
+            path.write_text("match_id,corner_event_id,start_x,start_y\n1,c0,120,abc\n")
+            corners = read_corner_table(path)
+        rows, _ = build_setups(corners, {"1": {"c0": self._frame("c0")}})
+        self.assertEqual(rows[0]["exclusion_reason"], "invalid_corner_location")
 
 if __name__ == "__main__":
     unittest.main()

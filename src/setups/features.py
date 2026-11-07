@@ -13,7 +13,7 @@ def polygon_points(flat):
     return [(float(flat[i]), float(flat[i + 1])) for i in range(0, len(flat) - 1, 2)]
 
 
-def frame_features(frame, start_y):
+def frame_features(frame, start_y, start_x=120.0):
     """Features for one corner. Returns None if the corner side is unknown.
 
     Attackers are the actor's teammates (teammate=True). The actor (corner
@@ -22,7 +22,7 @@ def frame_features(frame, start_y):
     (y<40) are mirrored so every corner is analysed as if taken from the top
     touchline (y=80).
     """
-    side = corner_side(start_y)
+    side = corner_side(start_y, start_x)
     if side is None:
         return None
     flip = side == "bottom"

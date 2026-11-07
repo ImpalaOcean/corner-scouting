@@ -31,6 +31,9 @@ def main():
     parser.add_argument("--min-corners-confident", type=int,
                         default=DEFAULTS["min_corners_confident"],
                         help="below this many usable corners results are labelled exploratory")
+    parser.add_argument("--min-cluster-size", type=int,
+                        default=DEFAULTS["min_cluster_size"],
+                        help="clusters smaller than this make the result exploratory")
     args = parser.parse_args()
     if args.output.exists():
         parser.exit(1, "Output exists; choose a new folder\n")
@@ -42,7 +45,8 @@ def main():
         rows, report = build_setups(
             corners, frames, k=args.k, min_box_coverage=args.min_box_coverage,
             min_visible_players=args.min_visible_players,
-            min_corners_confident=args.min_corners_confident)
+            min_corners_confident=args.min_corners_confident,
+            min_cluster_size=args.min_cluster_size)
     except (OSError, ValueError) as exc:
         parser.exit(1, f"Setup analysis failed: {exc}\n")
 

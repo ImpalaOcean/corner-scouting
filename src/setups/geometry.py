@@ -4,8 +4,13 @@
 toward x=120, so corners are always taken at x=120 from y near 0 or y near 80.
 """
 
+from math import isfinite
+
 PITCH_LENGTH = 120.0
 PITCH_WIDTH = 80.0
+
+# A corner must be taken within this many yards of a corner flag.
+CORNER_TOLERANCE = 3.0
 
 # Penalty box (attacking end): 18-yard line to goal line, 18 to 62 across.
 BOX_X0, BOX_X1 = 102.0, 120.0
@@ -16,11 +21,22 @@ X_EDGES = (102.0, 108.0, 114.0, 120.0)
 Y_EDGES = (18.0, 18.0 + 44.0 / 3, 18.0 + 88.0 / 3, 62.0)
 
 
-def corner_side(start_y):
-    """'top' if the corner is taken near y=80, 'bottom' if near y=0, else None."""
-    if start_y is None:
+def corner_side(start_y, start_x=PITCH_LENGTH):
+    """'top' if the corner is at the y=80 flag, 'bottom' if at the y=0 flag.
+
+    Returns None for anything that is not a real corner position: a missing or
+    non-finite coordinate, or a point more than CORNER_TOLERANCE yards from a
+    corner flag on the goal line (x=120)."""
+    for value in (start_x, start_y):
+        if type(value) not in (int, float) or not isfinite(value):
+            return None
+    if not PITCH_LENGTH - CORNER_TOLERANCE <= start_x <= PITCH_LENGTH:
         return None
-    return "top" if start_y >= PITCH_WIDTH / 2 else "bottom"
+    if 0 <= start_y <= CORNER_TOLERANCE:
+        return "bottom"
+    if PITCH_WIDTH - CORNER_TOLERANCE <= start_y <= PITCH_WIDTH:
+        return "top"
+    return None
 
 
 def mirror_y(y):

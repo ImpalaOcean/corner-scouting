@@ -10,14 +10,15 @@ REQUIRED_COLUMNS = ("match_id", "corner_event_id", "start_x", "start_y")
 
 
 def number(value):
-    """Blank or non-numeric -> None; otherwise a finite float."""
+    """Blank -> None (missing). Text that is not a finite number -> nan
+    (invalid, so it is never mistaken for a blank). Otherwise a float."""
     if value is None or str(value).strip() == "":
         return None
     try:
         result = float(value)
     except ValueError:
-        return None
-    return result if isfinite(result) else None
+        return float("nan")
+    return result if isfinite(result) else float("nan")
 
 
 def read_corner_table(path):
