@@ -8,6 +8,7 @@ Parquet input additionally needs pyarrow.
 from collections import defaultdict
 import csv
 from pathlib import Path
+import random
 
 DELIVERY_CATEGORIES = ['short', 'inswinging', 'outswinging', 'straight',
                        'unknown', 'direct_shot']
@@ -17,7 +18,7 @@ REQUIRED_COLUMNS = ['match_id', 'corner_event_id', 'team_id', 'team',
                     'delivery_category', 'shot_count', 'goal_count',
                     'led_to_shot', 'provider_xg_sum', 'window_seconds',
                     'short_limit', 'competition_id', 'competition_name',
-                    'season_id', 'season', 'match_date']
+                    'season_id', 'season', 'match_date', 'period']
 
 # A competition season needs this many dated matches before it is split;
 # with fewer, the 60/20/20 shares round to empty partitions.
@@ -29,13 +30,18 @@ MIN_CORNERS = 30
 
 TEAM_SUMMARY_FIELDS = (
     ['competition_id', 'competition_name', 'season_id', 'season', 'team_id',
-     'team', 'window_seconds', 'short_limit', 'first_match_date',
+     'team', 'window_seconds', 'short_limit', 'date_cutoff', 'first_match_date',
      'last_match_date', 'matches', 'corners']
     + [f'n_{c}' for c in DELIVERY_CATEGORIES]
     + [f'freq_{c}' for c in DELIVERY_CATEGORIES]
-    + ['corners_with_shot', 'shot_rate', 'shots', 'goals', 'goal_rate',
-       'xg_sum', 'xg_per_corner', 'small_sample']
+    + [f'freq_{c}_{b}' for c in DELIVERY_CATEGORIES for b in ('ci_low', 'ci_high')]
+    + ['corners_with_shot', 'shot_rate', 'shot_rate_ci_low', 'shot_rate_ci_high',
+       'shots', 'goals', 'goal_rate', 'xg_sum', 'xg_per_corner', 'small_sample']
 )
+
+PERIOD_FIELDS = ['competition_id', 'competition_name', 'season_id', 'season',
+                 'team_id', 'team', 'period_group', 'corners',
+                 'corners_with_shot', 'shot_rate', 'goals']
 
 SPLIT_FIELDS = ['competition_id', 'competition_name', 'season_id', 'season',
                 'match_id', 'match_date', 'order', 'split']
@@ -100,6 +106,7 @@ def _clean(raw, row_number):
         'season_id': _to_int(raw['season_id'], 'season_id', row_number),
         'season': None if _blank(raw['season']) else str(raw['season']),
         'match_date': None if _blank(raw['match_date']) else str(raw['match_date']),
+        'period': _to_int(raw['period'], 'period', row_number),
     }
     if row['match_id'] is None or row['corner_event_id'] is None or row['team_id'] is None:
         raise AnalysisError(f'row {row_number}: match_id, corner_event_id and team_id are required')
@@ -156,8 +163,53 @@ def _rate(numerator, denominator):
     return round(numerator / denominator, 4) if denominator else None
 
 
-def team_summaries(rows):
-    """One summary row per (competition, season, team)."""
+def apply_cutoff(rows, cutoff):
+    """Keep only corners from matches strictly before the cutoff date
+    (YYYY-MM-DD), so a prematch view never sees the match itself or later
+    ones. Matches without a date are dropped, since we cannot prove they
+    came first."""
+    if cutoff is None:
+        return rows
+    return [r for r in rows if r['match_date'] and r['match_date'] < cutoff]
+
+
+def bootstrap_interval(match_values, statistic, draws, rng):
+    """Match bootstrap: resample whole matches with replacement and return
+    the 2.5th and 97.5th percentiles of the statistic. match_values is a list
+    with one entry per match; statistic turns a resampled list into a number
+    (or None when undefined)."""
+    if draws <= 0 or not match_values:
+        return None, None
+    results = []
+    n = len(match_values)
+    for _ in range(draws):
+        sample = [match_values[rng.randrange(n)] for _ in range(n)]
+        value = statistic(sample)
+        if value is not None:
+            results.append(value)
+    if not results:
+        return None, None
+    results.sort()
+    low = results[int(0.025 * (len(results) - 1))]
+    high = results[int(round(0.975 * (len(results) - 1)))]
+    return round(low, 4), round(high, 4)
+
+
+def _ratio_statistic(numerator_key, denominator_key='corners'):
+    def statistic(sample):
+        denominator = sum(m[denominator_key] for m in sample)
+        if not denominator:
+            return None
+        return sum(m[numerator_key] for m in sample) / denominator
+    return statistic
+
+
+def team_summaries(rows, bootstrap_draws=0, seed=5118, cutoff=None):
+    """One summary row per (competition, season, team). With bootstrap_draws
+    above zero, adds match bootstrap 95% intervals for every frequency and
+    for the shot rate."""
+    rng = random.Random(seed)
+    rows = apply_cutoff(rows, cutoff)
     groups = defaultdict(list)
     for row in rows:
         groups[(row['competition_id'], row['season_id'], row['team_id'])].append(row)
@@ -184,6 +236,7 @@ def team_summaries(rows):
             'team': first['team'],
             'window_seconds': first['window_seconds'],
             'short_limit': first['short_limit'],
+            'date_cutoff': cutoff,
             'first_match_date': dates[0] if dates else None,
             'last_match_date': dates[-1] if dates else None,
             'matches': len(matches),
@@ -203,8 +256,60 @@ def team_summaries(rows):
             'xg_per_corner': _rate(xg, n),
             'small_sample': len(matches) < MIN_MATCHES or n < MIN_CORNERS,
         })
+        # Per match totals for this team, so the bootstrap keeps each
+        # match's corners together.
+        per_match = defaultdict(lambda: dict({c: 0 for c in DELIVERY_CATEGORIES},
+                                             corners=0, with_shot=0))
+        for r in corners:
+            m = per_match[r['match_id']]
+            m['corners'] += 1
+            m[r['delivery_category']] += 1
+            m['with_shot'] += 1 if r['led_to_shot'] else 0
+        match_values = [per_match[k] for k in sorted(per_match)]
+        for c in DELIVERY_CATEGORIES:
+            low, high = bootstrap_interval(match_values, _ratio_statistic(c),
+                                           bootstrap_draws, rng)
+            summary[f'freq_{c}_ci_low'], summary[f'freq_{c}_ci_high'] = low, high
+        low, high = bootstrap_interval(match_values, _ratio_statistic('with_shot'),
+                                       bootstrap_draws, rng)
+        summary['shot_rate_ci_low'], summary['shot_rate_ci_high'] = low, high
         summaries.append(summary)
     return summaries
+
+
+def _period_group(period):
+    if period in (1, 2):
+        return f'half_{period}'
+    if period in (3, 4):
+        return 'extra_time'
+    return 'other'
+
+
+def period_breakdown(rows, cutoff=None):
+    """Descriptive context table: corners and shot rate per team per period
+    group (first half, second half, extra time). Descriptive only; the
+    proposal makes no causal claims about context."""
+    rows = apply_cutoff(rows, cutoff)
+    groups = defaultdict(list)
+    for r in rows:
+        groups[(r['competition_id'], r['season_id'], r['team_id'],
+                _period_group(r['period']))].append(r)
+    out = []
+    for key in sorted(groups, key=lambda k: tuple(-1 if v is None else v for v in k)):
+        corners = groups[key]
+        first = corners[0]
+        with_shot = sum(1 for r in corners if r['led_to_shot'])
+        out.append({
+            'competition_id': first['competition_id'],
+            'competition_name': first['competition_name'],
+            'season_id': first['season_id'], 'season': first['season'],
+            'team_id': first['team_id'], 'team': first['team'],
+            'period_group': key[3], 'corners': len(corners),
+            'corners_with_shot': with_shot,
+            'shot_rate': _rate(with_shot, len(corners)),
+            'goals': sum(r['goal_count'] for r in corners),
+        })
+    return out
 
 
 # Chronological splits

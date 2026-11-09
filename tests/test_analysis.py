@@ -12,8 +12,9 @@ import sys
 import tempfile
 import unittest
 
-from src.analysis.summary import (AnalysisError, chronological_splits,
-                                  load_corners, team_summaries)
+from src.analysis.summary import (DELIVERY_CATEGORIES, AnalysisError,
+                                  chronological_splits, load_corners,
+                                  team_summaries)
 from src.corners.batch import FIELDS
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,7 +52,7 @@ class TeamSummaryTests(unittest.TestCase):
         self.assertEqual((b['n_short'], b['n_direct_shot'], b['n_inswinging']), (1, 1, 1))
         self.assertAlmostEqual(self.teams['Example C']['freq_unknown'], 0.5)
         for s in self.teams.values():
-            total = sum(s[k] for k in s if k.startswith('freq_'))
+            total = sum(s[f'freq_{c}'] for c in DELIVERY_CATEGORIES)
             self.assertAlmostEqual(total, 1.0, places=3)
 
     def test_outcomes(self):
