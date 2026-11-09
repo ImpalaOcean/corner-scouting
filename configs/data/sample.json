@@ -1,0 +1,18 @@
+{
+  "source_revision": "4b73468fc5b0f1950f9f66fada70ad3a4f9327cb",
+  "cache_dir": "data/raw",
+  "output_dir": "data/ingested/sample",
+  "download_360": true,
+  "competitions": [
+    {
+      "competition_id": 43,
+      "season_id": 106,
+      "max_matches": 1
+    },
+    {
+      "competition_id": 55,
+      "season_id": 282,
+      "max_matches": 1
+    }
+  ]
+}

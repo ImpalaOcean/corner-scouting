@@ -1,0 +1,677 @@
+[
+ {
+  "event_uuid": "c1",
+  "visible_area": [
+   60,
+   0,
+   120,
+   0,
+   120,
+   80,
+   60,
+   80
+  ],
+  "freeze_frame": [
+   {
+    "teammate": true,
+    "actor": true,
+    "keeper": false,
+    "location": [
+     120,
+     80
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     110,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     112,
+     50
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     105,
+     30
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     116,
+     45
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     111,
+     41
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     113,
+     52
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     106,
+     31
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     117,
+     46
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": true,
+    "location": [
+     119,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     90,
+     20
+    ]
+   }
+  ]
+ },
+ {
+  "event_uuid": "c2",
+  "visible_area": [
+   60,
+   0,
+   120,
+   0,
+   120,
+   80,
+   60,
+   80
+  ],
+  "freeze_frame": [
+   {
+    "teammate": true,
+    "actor": true,
+    "keeper": false,
+    "location": [
+     120,
+     0.1
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     110,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     112,
+     30
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     105,
+     50
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     116,
+     35
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     111,
+     39
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     113,
+     28
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     106,
+     49
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     117,
+     34
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": true,
+    "location": [
+     119,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     90,
+     60
+    ]
+   }
+  ]
+ },
+ {
+  "event_uuid": "c3",
+  "visible_area": [
+   60,
+   0,
+   120,
+   0,
+   120,
+   80,
+   60,
+   80
+  ],
+  "freeze_frame": [
+   {
+    "teammate": true,
+    "actor": true,
+    "keeper": false,
+    "location": [
+     120,
+     80
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     104,
+     60
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     105,
+     58
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     106,
+     61
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     103,
+     59
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     112,
+     40
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": true,
+    "location": [
+     119,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     95,
+     30
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     96,
+     35
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     97,
+     38
+    ]
+   }
+  ]
+ },
+ {
+  "event_uuid": "c4",
+  "visible_area": [
+   60,
+   0,
+   120,
+   0,
+   120,
+   80,
+   60,
+   80
+  ],
+  "freeze_frame": [
+   {
+    "teammate": true,
+    "actor": true,
+    "keeper": false,
+    "location": [
+     120,
+     80
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     110,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     112,
+     50
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     105,
+     30
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     116,
+     45
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     111,
+     41
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     113,
+     52
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     106,
+     31
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     117,
+     46
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": true,
+    "location": [
+     119,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     90,
+     20
+    ]
+   }
+  ]
+ },
+ {
+  "event_uuid": "c6",
+  "visible_area": [
+   60,
+   0,
+   70,
+   0,
+   70,
+   10,
+   60,
+   10
+  ],
+  "freeze_frame": [
+   {
+    "teammate": true,
+    "actor": true,
+    "keeper": false,
+    "location": [
+     120,
+     80
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     110,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     112,
+     50
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     105,
+     30
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     116,
+     45
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     111,
+     41
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     113,
+     52
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     106,
+     31
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     117,
+     46
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": true,
+    "location": [
+     119,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     90,
+     20
+    ]
+   }
+  ]
+ },
+ {
+  "event_uuid": "c8",
+  "visible_area": [
+   60,
+   0,
+   120,
+   0,
+   120,
+   80,
+   60,
+   80
+  ],
+  "freeze_frame": [
+   {
+    "teammate": true,
+    "actor": true,
+    "keeper": false,
+    "location": [
+     120,
+     80
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     110,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     112,
+     50
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     105,
+     30
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     116,
+     45
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     111,
+     41
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     113,
+     52
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     106,
+     31
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     117,
+     46
+    ]
+   },
+   {
+    "teammate": false,
+    "actor": false,
+    "keeper": true,
+    "location": [
+     119,
+     40
+    ]
+   },
+   {
+    "teammate": true,
+    "actor": false,
+    "keeper": false,
+    "location": [
+     90,
+     20
+    ]
+   }
+  ]
+ }
+]

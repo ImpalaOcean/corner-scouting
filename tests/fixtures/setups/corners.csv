@@ -1,0 +1,9 @@
+match_id,corner_event_id,team_id,team,start_x,start_y
+9001,c1,10,Example A,120,80
+9001,c2,10,Example A,120,0
+9001,c3,11,Example B,120,80
+9001,c4,10,Example A,120,80
+9001,c5,10,Example A,120,80
+9001,c6,10,Example A,120,80
+9002,c7,10,Example A,120,80
+9001,c8,10,Example A,,
