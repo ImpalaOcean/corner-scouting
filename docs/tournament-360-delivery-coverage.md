@@ -101,7 +101,7 @@ New local outputs in `outputs/tournament-360-delivery-coverage/`:
 - `exclusions.csv`: exclusion counts by tournament and reason.
 - `provenance.json`: input hashes, pinned source revision, checkout/code hashes, actual setup settings, file hashes, output hashes and per-match reconciliation.
 
-Reconciliation failures are explicitly recorded in provenance rather than forcing totals. The supplied manifest reports 1,083 corners and 592 matches; the measured run agrees with both and has no per-match discrepancy. Source revision is `4b73468fc5b0f1950f9f66fada70ad3a4f9327cb`. The checkout base is `1bc19f56b828faf50df637f5a1b8b0a77647211d`; the new uncommitted profiler is identified by its actual source hash, not claimed to be part of that commit.
+Reconciliation failures are explicitly recorded in provenance rather than forcing totals. The supplied manifest reports 1,083 corners and 592 matching frames; the measured run agrees with both and has no per-match discrepancy. Source revision is `4b73468fc5b0f1950f9f66fada70ad3a4f9327cb`. The checkout base is `1bc19f56b828faf50df637f5a1b8b0a77647211d`; the new uncommitted profiler is identified by its actual source hash, not claimed to be part of that commit.
 
 ```text
 corner_summary.csv input SHA-256
