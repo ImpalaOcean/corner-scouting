@@ -1,0 +1,24 @@
+{
+  "source_revision": "4b73468fc5b0f1950f9f66fada70ad3a4f9327cb",
+  "cache_dir": "data/raw",
+  "output_dir": "data/ingested/leagues-2015-16",
+  "download_360": false,
+  "competitions": [
+    {
+      "competition_id": 2,
+      "season_id": 27
+    },
+    {
+      "competition_id": 11,
+      "season_id": 27
+    },
+    {
+      "competition_id": 12,
+      "season_id": 27
+    },
+    {
+      "competition_id": 7,
+      "season_id": 27
+    }
+  ]
+}
