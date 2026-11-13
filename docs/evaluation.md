@@ -81,7 +81,38 @@ between methods, and per team differences.
 * `period_summary.csv`: corners and shot rate by first half, second half and
   extra time. Descriptive; no causal claims.
 * Sensitivity: `python -m src.analysis.compare` lines up runs made from the
-  10s, 15s, 20s and uncapped corner tables.
+  10s, 15s, 20s and uncapped corner tables. This is a window-only comparison:
+  corner keys, immutable delivery/location attributes, team and competition-season
+  metadata, short threshold, cutoff, seed, bootstrap controls and recorded analysis
+  code must agree. It rejects missing result files and incompatible populations.
+
+## Unavailable targets and publication
+
+Delivery and shot availability are handled separately. If validation has no
+eligible known delivery labels, alpha remains null: no delivery parameter is
+invented, delivery scores/probabilities remain unavailable for all three methods,
+and beta selection plus shot evaluation continue on all eligible corners. This
+target-level unavailable policy keeps the three delivery methods on the same
+scoring population. If test delivery labels are all unknown, delivery metrics are
+unavailable, while valid shot scores remain available. Empty CSV cells represent
+unavailable values, never zero; status/reason fields and eligible/known/unknown
+counts explain them. Eligibility thresholds, grids, baseline formulas,
+chronological splits and validation-only parameter selection are unchanged.
+
+New analysis outputs are written to a temporary sibling directory and published
+only after writing, plotting, formatting and final input-hash checks succeed.
+Existing destinations are refused. New manifests record input/artifact/code
+SHA-256 hashes and a normalized `input_contract.json`. That contract fingerprints
+all corner keys and invariant attributes independently of outcomes and window.
+Comparison checks source bytes and recorded hashes when available, or a
+hash-verified saved contract if the original input cannot be accessed; it records
+that limitation in `comparison_manifest.json`. A legacy analysis can be compared
+only when its original input is accessible and compatible; absent recorded hashes
+and code evidence are disclosed as unverified, not silently treated as verified.
+Relative legacy input paths are resolved from the invocation's repository root.
+Historical association between an unhashed legacy result and today's source file
+cannot be established. New extraction or sensitivity tables are not needed to
+use these fixes; existing tables can be passed to a future analysis run.
 
 Not available from the current corner table: score state and opponent
 strength. Opponent strata would hold one or two matches each, so they are not

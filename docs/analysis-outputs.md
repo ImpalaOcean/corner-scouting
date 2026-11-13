@@ -10,6 +10,7 @@ outputs/analysis_<name>/
   period_summary.csv         corners and shot rate by half
   match_splits.csv           train / validation / test label for every match
   analysis_manifest.json     what was run: input, settings, cutoff, evaluation results
+  input_contract.json       normalized corner population/invariant-attribute fingerprints
   evaluation/                only when evaluation ran (no --cutoff)
     team_predictions.csv     expected delivery mix and shot chance for eligible teams
     team_evaluation.csv      per team test scores
@@ -20,6 +21,30 @@ outputs/analysis_<name>/
 Join keys: a team is `(competition_id, season_id, team_id)`. A corner is
 `(match_id, corner_event_id)`, the same key the setups module uses.
 Empty cells mean "not available" (for example no interval when bootstrap is off).
+
+New analysis manifests also contain `status=complete`, an absolute input path,
+input/contract/output hashes, analysis source-content hashes, and a protocol
+identifier. The complete folder appears only after all writes and console
+formatting succeed. No partial result folder is published on failure.
+
+Evaluation summaries/differences include `status` and `reason`. Summary rows also
+record `eligible_corners`, `known_delivery_corners` and `unknown_delivery_corners`;
+`corners` is the number actually scored for that target (zero if unavailable).
+Per-team evaluation adds `test_corners_known`, delivery/shot status and reason;
+`test_corners_scored` counts actually scored delivery cases. Unknown corners
+remain in descriptions and shot scoring. Evaluation metadata has target-specific
+availability/reasons and validation/test label counts.
+
+Prediction rows add `delivery_status` and `shot_status`. When no delivery alpha
+can be selected on validation, `p_<category>` is blank for every method while
+`p_shot` remains available when beta can be selected. Alpha remains null in the
+manifest; blank delivery probabilities are not an all-zero distribution.
+
+Window comparisons require matching exact corner populations and invariant
+delivery attributes plus fixed controls, and write `comparison_manifest.json`
+with input contracts and explicit provenance warnings. The comparison is not a
+short-threshold experiment. Old result folders remain unchanged; legacy evidence
+without input/artifact/code hashes is explicitly unverified where appropriate.
 
 ## team_summary_v1.csv
 

@@ -11,6 +11,9 @@ import argparse
 import json
 from pathlib import Path
 
+from .contracts import input_contract, sha256
+from .publication import new_output_directory
+
 from .evaluation import (DIFFERENCE_FIELDS, PREDICTION_FIELDS, RELIABILITY_FIELDS,
                          SELECTION_FIELDS, STABILITY_FIELDS, SUMMARY_FIELDS,
                          TEAM_EVAL_FIELDS, evaluate)
@@ -68,11 +71,14 @@ def _print_evaluation(tables, meta):
           f"{meta['test_corners']} test corners in {meta['test_matches']} test matches")
     if meta['note']:
         print(meta['note'])
-        return
-    print(f"Chosen on validation: alpha = {meta['alpha']}, beta = {meta['beta']}")
+    alpha = meta['alpha'] if meta['alpha'] is not None else 'unavailable'
+    beta = meta['beta'] if meta['beta'] is not None else 'unavailable'
+    print(f"Chosen on validation: alpha = {alpha}, beta = {beta}")
     for row in tables['evaluation_summary']:
+        score = 'n/a' if row['score'] is None else f"{row['score']:.4f}"
+        reason = f" ({row['reason']})" if row.get('reason') else ''
         print(f"  {row['target']:<9}{row['metric']:<10}{row['method']:<11}"
-              f"{row['score']:.4f}  [{row['ci_low']}, {row['ci_high']}]")
+              f"{score}  [{row['ci_low']}, {row['ci_high']}]{reason}")
     for row in tables['evaluation_differences']:
         if row['difference'] is None:
             continue
@@ -101,6 +107,7 @@ def main():
     if args.output.exists():
         parser.exit(1, f'Output folder already exists: {args.output}. Choose a new name.\n')
     try:
+        contract = input_contract(args.input)
         rows = load_corners(args.input)
         summaries = team_summaries(rows, args.bootstrap, args.seed, args.cutoff)
         periods = period_breakdown(rows, args.cutoff)
@@ -110,54 +117,64 @@ def main():
     except AnalysisError as exc:
         parser.exit(1, f'Analysis failed: {exc}\n')
 
-    args.output.mkdir(parents=True)
-    write_csv(args.output / 'team_summary_v1.csv', TEAM_SUMMARY_FIELDS, summaries)
-    write_csv(args.output / 'period_summary.csv', PERIOD_FIELDS, periods)
-    write_csv(args.output / 'match_splits.csv', SPLIT_FIELDS, splits)
-    figure = False
-    if tables is not None:
-        folder = args.output / 'evaluation'
-        folder.mkdir()
-        for name, fields in (('alpha_selection', SELECTION_FIELDS),
-                             ('evaluation_summary', SUMMARY_FIELDS),
-                             ('evaluation_differences', DIFFERENCE_FIELDS),
-                             ('team_evaluation', TEAM_EVAL_FIELDS),
-                             ('reliability', RELIABILITY_FIELDS),
-                             ('profile_stability', STABILITY_FIELDS),
-                             ('team_predictions', PREDICTION_FIELDS)):
-            write_csv(folder / f'{name}.csv', fields, tables[name])
-        if tables['reliability']:
-            figure = _plot_reliability(tables['reliability'], folder / 'reliability.png')
+    with new_output_directory(args.output) as staging:
+        write_csv(staging / 'team_summary_v1.csv', TEAM_SUMMARY_FIELDS, summaries)
+        write_csv(staging / 'period_summary.csv', PERIOD_FIELDS, periods)
+        write_csv(staging / 'match_splits.csv', SPLIT_FIELDS, splits)
+        figure = False
+        if tables is not None:
+            folder = staging / 'evaluation'
+            folder.mkdir()
+            for name, fields in (('alpha_selection', SELECTION_FIELDS),
+                                 ('evaluation_summary', SUMMARY_FIELDS),
+                                 ('evaluation_differences', DIFFERENCE_FIELDS),
+                                 ('team_evaluation', TEAM_EVAL_FIELDS),
+                                 ('reliability', RELIABILITY_FIELDS),
+                                 ('profile_stability', STABILITY_FIELDS),
+                                 ('team_predictions', PREDICTION_FIELDS)):
+                write_csv(folder / f'{name}.csv', fields, tables[name])
+            if tables['reliability']:
+                figure = _plot_reliability(tables['reliability'], folder / 'reliability.png')
 
-    counts = {}
-    for s in splits:
-        counts[s['split']] = counts.get(s['split'], 0) + 1
-    (args.output / 'analysis_manifest.json').write_text(json.dumps({
-        'schema': 'team_summary_v1',
-        'input': str(args.input),
-        'corners': len(rows),
-        'teams': len(summaries),
-        'matches_by_split': counts,
-        'window_seconds': rows[0]['window_seconds'] if rows else None,
-        'short_limit': rows[0]['short_limit'] if rows else None,
-        'date_cutoff': args.cutoff,
-        'bootstrap_draws': args.bootstrap,
-        'seed': args.seed,
-        'evaluation': meta,
-        'reliability_figure': figure,
-    }, indent=2), encoding='utf-8')
+        (staging / 'input_contract.json').write_text(json.dumps(contract, indent=2), encoding='utf-8')
 
-    print(f'{len(rows)} corners, {len(summaries)} team rows -> {args.output}')
-    _print_summaries(summaries)
-    print('Match splits: ' + ', '.join(f'{k} {v}' for k, v in sorted(counts.items())))
-    small = sum(1 for s in summaries if s['small_sample'])
-    if small:
-        print(f'{small} of {len(summaries)} team rows are below 10 matches / 30 corners '
-              '(descriptive only, not for prediction).')
-    if meta is not None:
-        _print_evaluation(tables, meta)
-    else:
-        print(f'Prematch view before {args.cutoff}; evaluation skipped.')
+        counts = {}
+        for s in splits:
+            counts[s['split']] = counts.get(s['split'], 0) + 1
+        (staging / 'analysis_manifest.json').write_text(json.dumps({
+            'schema': 'team_summary_v1',
+            'status': 'complete',
+            'input_sha256': contract['input_sha256'],
+            'input_contract_sha256': sha256(staging / 'input_contract.json'),
+            'analysis_code_sha256': {p.name: sha256(p) for p in Path(__file__).parent.glob('*.py')},
+            'evaluation_protocol': 'train-60-validation-20-test-20-v1',
+            'outputs_sha256': {str(p.relative_to(staging)): sha256(p) for p in staging.rglob('*') if p.is_file()},
+            'input': str(args.input.resolve()),
+            'corners': len(rows),
+            'teams': len(summaries),
+            'matches_by_split': counts,
+            'window_seconds': rows[0]['window_seconds'] if rows else None,
+            'short_limit': rows[0]['short_limit'] if rows else None,
+            'date_cutoff': args.cutoff,
+            'bootstrap_draws': args.bootstrap,
+            'seed': args.seed,
+            'evaluation': meta,
+            'reliability_figure': figure,
+        }, indent=2), encoding='utf-8')
+
+        print(f'{len(rows)} corners, {len(summaries)} team rows -> {args.output}')
+        _print_summaries(summaries)
+        print('Match splits: ' + ', '.join(f'{k} {v}' for k, v in sorted(counts.items())))
+        small = sum(1 for s in summaries if s['small_sample'])
+        if small:
+            print(f'{small} of {len(summaries)} team rows are below 10 matches / 30 corners '
+                  '(descriptive only, not for prediction).')
+        if meta is not None:
+            _print_evaluation(tables, meta)
+        else:
+            print(f'Prematch view before {args.cutoff}; evaluation skipped.')
+        if sha256(args.input) != contract['input_sha256']:
+            raise AnalysisError('Input changed during analysis; refusing publication')
 
 
 if __name__ == '__main__':

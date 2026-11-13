@@ -38,16 +38,18 @@ RELIABILITY_BINS = 10
 TEAM_EVAL_FIELDS = (
     ['competition_id', 'competition_name', 'season_id', 'season', 'team_id',
      'team', 'history_matches', 'history_corners', 'test_matches',
-     'test_corners_scored', 'test_corners_unknown']
+     'test_corners_scored', 'test_corners_unknown', 'test_corners_known',
+     'delivery_status', 'delivery_reason', 'shot_status', 'shot_reason']
     + [f'logloss_{m}' for m in METHODS]
     + [f'brier_{m}' for m in METHODS]
     + ['logloss_shrunk_minus_pooled', 'logloss_diff_ci_low', 'logloss_diff_ci_high',
        'brier_shrunk_minus_pooled', 'brier_diff_ci_low', 'brier_diff_ci_high']
 )
 SUMMARY_FIELDS = ['target', 'metric', 'method', 'score', 'ci_low', 'ci_high',
-                  'corners', 'matches', 'teams']
+                  'corners', 'matches', 'teams', 'status', 'reason',
+                  'eligible_corners', 'known_delivery_corners', 'unknown_delivery_corners']
 DIFFERENCE_FIELDS = ['target', 'metric', 'comparison', 'difference', 'ci_low',
-                     'ci_high', 'better_if', 'corners', 'matches']
+                     'ci_high', 'better_if', 'corners', 'matches', 'status', 'reason']
 SELECTION_FIELDS = ['parameter', 'value', 'validation_score', 'metric', 'chosen']
 RELIABILITY_FIELDS = ['method', 'bin', 'bin_low', 'bin_high', 'corners',
                       'mean_predicted', 'observed_rate']
@@ -56,7 +58,7 @@ STABILITY_FIELDS = ['competition_id', 'competition_name', 'season_id', 'season',
                     'tvd_team_history_vs_test', 'tvd_pooled_vs_test']
 PREDICTION_FIELDS = (['competition_id', 'competition_name', 'season_id', 'season',
                       'team_id', 'team', 'method']
-                     + [f'p_{c}' for c in SCORED_CATEGORIES] + ['p_shot'])
+                     + [f'p_{c}' for c in SCORED_CATEGORIES] + ['p_shot', 'delivery_status', 'shot_status'])
 
 
 # Fitting (uses history corners only)
@@ -174,17 +176,13 @@ def score_corners(fit, targets, teams, alpha, beta):
                   'team_id': r['team_id'], 'shot': 1 if r['led_to_shot'] else 0,
                   'known': r['delivery_category'] in SCORED_CATEGORIES}
         for m in METHODS:
-            p = delivery_probabilities(fit, stratum, r['team_id'], m, alpha)
-            q = shot_probability(fit, stratum, r['team_id'], m, beta)
-            if p is None or q is None:
-                record = None
-                break
+            p = delivery_probabilities(fit, stratum, r['team_id'], m, alpha) if alpha is not None else None
+            q = shot_probability(fit, stratum, r['team_id'], m, beta) if beta is not None else None
             record[f'logloss_{m}'] = (-math.log(p[r['delivery_category']])
-                                      if record['known'] else None)
+                                      if p is not None and record['known'] else None)
             record[f'shot_p_{m}'] = q
-            record[f'brier_{m}'] = (q - record['shot']) ** 2
-        if record is not None:
-            records.append(record)
+            record[f'brier_{m}'] = (q - record['shot']) ** 2 if q is not None else None
+        records.append(record)
     return records
 
 
@@ -255,6 +253,8 @@ def reliability_table(records, bins=RELIABILITY_BINS):
         buckets = defaultdict(list)
         for r in records:
             p = r[f'shot_p_{m}']
+            if p is None:
+                continue
             index = min(int(p * bins), bins - 1)
             buckets[index].append(r)
         for index in range(bins):
@@ -332,9 +332,20 @@ def evaluate(rows, splits, bootstrap_draws=1000, seed=5118):
 
     # Stage 2: refit on everything before the test matches, score test once.
     final_fit = fit_history(train + validation)
-    records = []
-    if alpha is not None and beta is not None:
-        records = score_corners(final_fit, test, teams, alpha, beta)
+    records = score_corners(final_fit, test, teams, alpha, beta)
+
+    def availability(target, subset):
+        parameter = alpha if target == 'delivery' else beta
+        if not teams:
+            return 'unavailable', 'no_train_eligible_teams'
+        if parameter is None:
+            return 'unavailable', ('no_scorable_validation_delivery_labels' if target == 'delivery'
+                                   else 'no_eligible_validation_corners')
+        if not subset:
+            return 'unavailable', 'no_eligible_test_corners'
+        if target == 'delivery' and not any(r['known'] for r in subset):
+            return 'unavailable', 'no_scorable_test_delivery_labels'
+        return 'available', None
 
     rng = random.Random(seed)
     matches = _by_match(records)
@@ -344,6 +355,7 @@ def evaluate(rows, splits, bootstrap_draws=1000, seed=5118):
         used = [r for r in records if r[f'{prefix}_shrunk'] is not None]
         n_matches = len({(r['stratum'], r['match_id']) for r in used})
         n_teams = len({(r['stratum'], r['team_id']) for r in used})
+        status, reason = availability(target, records)
         for m in METHODS:
             score = _mean(records, f'{prefix}_{m}')
             low, high = bootstrap_interval(matches, _mean_of_sample(f'{prefix}_{m}'),
@@ -351,7 +363,11 @@ def evaluate(rows, splits, bootstrap_draws=1000, seed=5118):
             summary_rows.append({'target': target, 'metric': metric, 'method': m,
                                  'score': None if score is None else round(score, 6),
                                  'ci_low': low, 'ci_high': high, 'corners': len(used),
-                                 'matches': n_matches, 'teams': n_teams})
+                                 'matches': n_matches, 'teams': n_teams,
+                                 'status': status, 'reason': reason,
+                                 'eligible_corners': len(records),
+                                 'known_delivery_corners': sum(r['known'] for r in records),
+                                 'unknown_delivery_corners': sum(not r['known'] for r in records)})
         for other in ('pooled', 'unsmoothed'):
             values = [r[f'{prefix}_shrunk'] - r[f'{prefix}_{other}'] for r in used]
             diff = sum(values) / len(values) if values else None
@@ -363,7 +379,7 @@ def evaluate(rows, splits, bootstrap_draws=1000, seed=5118):
                 'difference': None if diff is None else round(diff, 6),
                 'ci_low': low, 'ci_high': high,
                 'better_if': 'negative (shrunk has lower loss)',
-                'corners': len(used), 'matches': n_matches})
+                'corners': len(used), 'matches': n_matches, 'status': status, 'reason': reason})
 
     # Per team scores with their own match bootstrap.
     team_rows = []
@@ -378,9 +394,12 @@ def evaluate(rows, splits, bootstrap_draws=1000, seed=5118):
             'history_matches': len(final_fit['team_matches'].get(key, ())),
             'history_corners': final_fit['team_corners'].get(key, 0),
             'test_matches': len(team_matches),
-            'test_corners_scored': sum(1 for r in team_records if r['known']),
+            'test_corners_scored': sum(1 for r in team_records if r['logloss_shrunk'] is not None),
+            'test_corners_known': sum(1 for r in team_records if r['known']),
             'test_corners_unknown': sum(1 for r in team_records if not r['known']),
         })
+        for target in ('delivery', 'shot'):
+            row[target+'_status'], row[target+'_reason'] = availability(target, team_records)
         for prefix in ('logloss', 'brier'):
             for m in METHODS:
                 value = _mean(team_records, f'{prefix}_{m}')
@@ -401,12 +420,14 @@ def evaluate(rows, splits, bootstrap_draws=1000, seed=5118):
     for key in sorted(teams, key=str):
         stratum, team_id = key
         for m in METHODS:
-            p = delivery_probabilities(final_fit, stratum, team_id, m, alpha or 0)
-            q = shot_probability(final_fit, stratum, team_id, m, beta or 0)
-            if p is None or q is None:
+            p = delivery_probabilities(final_fit, stratum, team_id, m, alpha) if alpha is not None else None
+            q = shot_probability(final_fit, stratum, team_id, m, beta) if beta is not None else None
+            if p is None and q is None:
                 continue
-            row = dict(info[key], method=m, p_shot=round(q, 4))
-            row.update({f'p_{c}': round(p[c], 4) for c in SCORED_CATEGORIES})
+            row = dict(info[key], method=m, p_shot=round(q, 4) if q is not None else None,
+                       delivery_status='available' if p is not None else 'unavailable',
+                       shot_status='available' if q is not None else 'unavailable')
+            row.update({f'p_{c}': round(p[c], 4) if p is not None else None for c in SCORED_CATEGORIES})
             predictions.append(row)
 
     meta = {
@@ -417,6 +438,13 @@ def evaluate(rows, splits, bootstrap_draws=1000, seed=5118):
         'test_matches': len(matches),
         'history_corners': len(history),
         'bootstrap_draws': bootstrap_draws, 'seed': seed,
+        'targets': {target: dict(zip(('status','reason'), availability(target, records)))
+                    for target in ('delivery','shot')},
+        'validation_corners': sum((_stratum(r),r['team_id']) in teams for r in validation),
+        'validation_known_delivery_corners': sum((_stratum(r),r['team_id']) in teams and
+                                                  r['delivery_category'] in SCORED_CATEGORIES for r in validation),
+        'test_corners_known_delivery': sum(r['known'] for r in records),
+        'test_corners_unknown_delivery': sum(not r['known'] for r in records),
         'note': None if records else
                 'No eligible team has test corners; nothing was scored. '
                 'Needs competition seasons where teams reach 10 training matches.',
@@ -426,7 +454,7 @@ def evaluate(rows, splits, bootstrap_draws=1000, seed=5118):
         'evaluation_summary': summary_rows,
         'evaluation_differences': difference_rows,
         'team_evaluation': team_rows,
-        'reliability': reliability_table(records) if records else [],
+        'reliability': reliability_table(records) if records and beta is not None else [],
         'profile_stability': profile_stability(final_fit, test, teams, info),
         'team_predictions': predictions,
     }, meta
