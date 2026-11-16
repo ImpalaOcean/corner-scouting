@@ -77,7 +77,7 @@ Use the Python reference to establish expected differential behavior, alongside 
 4. Compare outputs and stop downstream processing on an unaccepted mismatch.
 5. Run descriptive/predictive analysis on the agreed table; record per-target availability and eligible team counts.
 6. Run setups only in spatial mode with the expected frame sources. Keep unavailable spatial data separate from event-data failures.
-7. Invoke the dossier once its CLI/contract is available; otherwise report that stage as unavailable and do not claim a complete dossier run.
+7. Integrate the available dossier select/build CLI after agreeing its input contract and timing scope with Mohamed. Keep this stage separate from the first sample runner, which cannot supply an eligible league fixture.
 8. Write a run manifest, validation report and stage timings. Publish a successful final run only after required stages and checks pass.
 
 Reconciliation will check per-match ingestion/extraction corner counts; unique corner keys; schema, settings and metadata agreement; `led_to_shot == (shot_count > 0)`; shot-list lengths and membership in chains; and one setup record per input corner when setups run. Retain zero-corner matches in coverage/manifests.
@@ -88,7 +88,7 @@ Prematch mode must apply the cutoff to source corner rows before aggregation, us
 
 Measure JSON loading, extraction, output writing and total stage time separately when feasible. Keep network download time separate from extraction performance. Use identical inputs/settings/output formats for Python/SQL comparisons, verify agreement first, record thread count and warm/cold cache conditions, and perform repeated runs with fresh destinations. Report timings and variability; do not claim SQL is faster without measurements.
 
-For dossier timing, agree whether the benchmark starts with raw corners, precomputed analysis/setup artifacts, or another defined boundary. Record all included stages and inputs, plus CPU, RAM, OS, Python/DuckDB versions, corpus size and repetitions. Dossier timing depends on Mohamed's generator becoming available.
+For dossier timing, agree whether the benchmark starts with raw corners, precomputed analysis/setup artifacts, or another defined boundary. Record all included stages and inputs, plus CPU, RAM, OS, Python/DuckDB versions, corpus size and repetitions. The cutoff-safe dossier generator is available through PR #24. Dossier timing now depends on agreement with Mohamed on the measurement boundary and inputs.
 
 ## Milestones
 
@@ -108,10 +108,14 @@ Implementation order: extraction semantics and fixtures -> SQL/sample parity -> 
 - Ebtesam: obtain or regenerate the frozen dataset configuration and manifests. Paths in another member's local manifest may require rebasing; ignored data/output directories do not arrive with a Git clone.
 - Asaad: use current analysis outputs/availability conventions and preserve training/validation/test separation.
 - Utkarsh: agree spatial mode and any historical setup fitting requirement.
-- Mohamed: obtain a callable dossier generator, its input contract, cutoff handling, and timing scope. Only a README exists in that directory on reviewed main.
+- Mohamed: review the cutoff-safe dossier select/build CLI merged through PR #24, agree its input contract and timing scope, and preserve its past-only aggregation and fitting rules.
 - Large corpus runs are not reproduced by the existing two-match sample. Reserve time/storage and record actual completion rather than equating fixture success with full reproduction.
 - A clean-checkout run must use the new feature branch's exact commit and installed dependencies. Running a second command in a developer's already-configured working directory is not sufficient evidence.
 
 ## Initial validation
 
 The current suite discovered 160 tests: 158 passed and two optional Parquet tests were skipped because pyarrow is absent. A fresh real-data sample run completed ingestion, Python extraction, analysis and setups: 2 matches, 6,671 events, 9 corners and 5 usable 360 frames. No prediction-eligible teams in this sample is expected. SQL, orchestration, clean-checkout reproduction, Parquet verification and benchmark results are not completed by that run.
+
+## November 14 implementation update
+
+The dossier dependency has been updated following PR #24. The first SQL extractor, field-level checker and sample runner are implemented on a separate feature branch; execution instructions and validation scope are recorded in `docs/reproducibility.md` and `docs/systems-sample-validation.md`. Larger-corpus comparisons, committed clean-checkout reproduction and dossier benchmarks remain later deliverables.
