@@ -135,30 +135,95 @@ seasons, 3,961 matches) would meet the proposal's "tens of thousands of
 corners" target. Tournaments remain useful for descriptive dossiers and the
 360 setups, since league seasons have no 360 data.
 
-## First results (Premier League 2015/16 + FA WSL 2020/21, 511 matches)
+## Final results (2015/16 Premier League, La Liga, Serie A, Ligue 1)
 
-Local test run, not yet the full corpus. 30 eligible teams, 1,067 test
-corners in 102 test matches. Chosen alpha = 20, beta = 200.
+Reviewed and independently reproduced by Asaad on 2026-11-15. Input: the
+primary 15 second, 15 unit short limit corner table, 1,517 matches and
+15,482 corners. Its SHA-256 (`425f08f3...627d8`) equals Diego's primary run
+recorded in `docs/leagues-2015-16-window-sensitivity.md`, so both runs used
+byte identical input. Tables and figures come from
+`python -m src.analysis.report` (commands below), which rebuilds every test
+score from the saved alpha and beta and refuses to report if any overall score
+differs from the saved run.
 
-* Deliveries: team history beats the competition average. Log loss 1.152
-  (shrunk) vs 1.200 (pooled); difference -0.048, 95% interval [-0.081,
-  -0.017]. Shrunk and unsmoothed are close (difference -0.003, interval
-  includes zero).
-* Shot creation: no clear gain. Brier 0.2296 (shrunk) vs 0.2298 (pooled),
-  difference interval includes zero. The large chosen beta says the data
-  prefers the competition average.
-* Per team: the gain varies. 7 of 30 teams show a clear delivery
-  improvement; a few show none or a loss.
-* Sensitivity: the delivery result is identical for every window (windows
-  only change outcomes). The overall shot rate rises with the window (30.7%
-  at 10s, 33.0% at 15s, 34.2% at 20s, 36.7% uncapped), but the shot finding
-  (no clear team effect) holds for all four.
+### Eligibility
 
-Interpretation for the paper: teams have stable delivery habits worth scouting,
-but in this sample their past shot creation rate from corners does not
-predict future shot creation better than the league average.
+All 80 teams pass the training threshold (10 matches, 30 corners in the
+training split). Every competition season splits into 226 to 228 train, 75 to
+76 validation and 76 test matches. Ligue 1 has 377 listed matches (provider
+gap, see the data coverage docs). Per team counts: `eligibility_teams.csv`.
+
+| Competition | Matches | Train / val / test | Corners | Eligible teams |
+| --- | ---: | --- | ---: | ---: |
+| Premier League | 380 | 228 / 76 / 76 | 4,108 | 20 of 20 |
+| Ligue 1 | 377 | 226 / 75 / 76 | 3,591 | 20 of 20 |
+| La Liga | 380 | 228 / 76 / 76 | 3,842 | 20 of 20 |
+| Serie A | 380 | 228 / 76 / 76 | 3,941 | 20 of 20 |
+
+### Main result
+
+Chosen on validation: alpha = 50 (delivery), beta = 200 (shot); neither is at
+the edge of the grid. 3,154 test corners in 304 test matches; 2,916 have a
+known delivery and are scored for log loss. Differences are shrunk minus
+baseline on the same corners (paired), with 95% match bootstrap intervals.
+
+| Target | Pooled | Unsmoothed | Shrunk | Shrunk minus pooled | Shrunk minus unsmoothed |
+| --- | ---: | ---: | ---: | --- | --- |
+| Delivery (log loss) | 1.1294 | 1.1187 | 1.0960 | -0.0334 [-0.0466, -0.0201] | -0.0226 [-0.0424, -0.0070] |
+| Shot (Brier) | 0.2204 | 0.2214 | 0.2203 | -0.0002 [-0.0009, 0.0006] | -0.0011 [-0.0020, -0.0002] |
+
+* **Deliveries:** team history, shrunk toward the league average, predicts
+  later delivery types better than the league average alone. The interval is
+  entirely below zero. By league the gain is clear in the Premier League
+  (-0.057), La Liga (-0.030) and Serie A (-0.029); in Ligue 1 it points the
+  same way (-0.015) but the interval includes zero.
+* **Shot creation:** no measurable gain over the league average in any
+  league. The large chosen beta (200) itself says the data prefers the league
+  average. Shrinkage does beat raw team shot rates, which means raw team shot
+  rates are worse than the league average at predicting later shot creation.
+* **Per team:** 20 of 80 teams have a delivery interval below zero and 2 above,
+  where about 2 per side would be expected by chance alone; individual teams
+  should not be singled out as proof. For shots, 9 below and 4 above, against
+  the overall null result.
+* **Windows:** delivery results are identical for 10s, 15s, 20s and uncapped
+  (windows change outcomes, not deliveries). The shot result is null under all
+  four (10s chose beta = 500, the others 200).
+
+Interpretation for the paper: teams have repeatable corner delivery habits that
+are worth scouting, but a team's past rate of shots from corners does not
+predict its later rate better than the league average in this corpus.
+
+### Review notes (methodological concerns, nothing rerun or changed)
+
+1. **Shrunk versus unsmoothed delivery depends on the floor probability.** The
+   unsmoothed baseline gives a never seen category probability 1e-6. Seven test
+   corners (0.24%) fall in such a category and each costs about 13.8 in log
+   loss. They account for -0.0195 of the -0.0226 gap; without them the gap is
+   -0.0032. Report this comparison with that caveat. The main comparison
+   (shrunk versus pooled) is unaffected because pooled uses add one smoothing.
+2. **Wording in the console printout.** The runner labels any negative interval
+   "team history helps", including shrunk minus unsmoothed, where it actually
+   means "smoothing helps". The report uses neutral wording ("shrunk better").
+3. **Per team intervals are 80 separate comparisons;** about 4 would exclude
+   zero by chance. Use them descriptively, not as team level claims.
+4. **The test split is the last 20% of each season,** so it covers the run
+   in; end of season effects are not separated from habit stability.
+5. **One alpha and one beta for all four leagues.** League specific smoothing
+   was not tried, by design; the per league table shows the shared choice
+   still helps in three of four.
 
 ## Running
+
+Reproduce the final tables and figures (after the league extraction runs in
+`docs/league-2015-16-runs.md`):
+
+    python -m src.analysis --input outputs/leagues-2015-16-corners/corner_summary.csv --output outputs/analysis_leagues_w15
+    python -m src.analysis --input outputs/leagues-2015-16-window-10/corner_summary.csv --output outputs/analysis_leagues_w10
+    python -m src.analysis --input outputs/leagues-2015-16-window-20/corner_summary.csv --output outputs/analysis_leagues_w20
+    python -m src.analysis --input outputs/leagues-2015-16-window-uncapped/corner_summary.csv --output outputs/analysis_leagues_wuncapped
+    python -m src.analysis.report --run outputs/analysis_leagues_w15 --windows outputs/analysis_leagues_w10 outputs/analysis_leagues_w20 outputs/analysis_leagues_wuncapped --output outputs/report_leagues
+
+General usage:
 
     python -m src.analysis --input outputs/<run>/corner_summary.csv --output outputs/analysis_<run>
     python -m src.analysis.compare --runs outputs/analysis_w10 outputs/analysis_w15 --output outputs/sensitivity

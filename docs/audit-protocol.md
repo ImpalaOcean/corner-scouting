@@ -2,61 +2,115 @@
 
 Purpose (proposal Section 3): two members independently check 100 sampled
 corner sequences against the raw StatsBomb events and report agreement and
-resolved errors. This checks the extractor against its source records and its
-documented rules (`docs/corner-extraction-methods.md`); it is not independent
-ground truth.
+resolved errors. This is a source consistency audit: it checks the versioned
+extractor against its source records and its documented rules
+(`docs/corner-extraction-methods.md`). It is not an independently sourced
+football ground truth evaluation.
 
-## 1. Same sample for both
+This protocol is reconciled with the "Combined-corpus audit preparation"
+section of `docs/corner-extraction-methods.md`. Where they differ, that
+section's rules win.
 
-One person draws the sample from the agreed corner table and shares the sheet
-(Drive folder). Same input file and seed always give the same 100 corners.
+## 1. Scope and inputs
 
-    python -m src.analysis.audit sample --input outputs/<run>/corner_summary.csv --output outputs/audit
+Scope: World Cup 2022, Euro 2024 and the 2015/16 Premier League, La Liga,
+Serie A and Ligue 1, using only the primary 15 second window and 15 unit
+short limit tables. Alternative window tables are sensitivity experiments, not
+extra audit observations.
 
-Record the input path and the batch run's `run_manifest.json` hash in the
-paper. The sample covers rare and boundary cases first (direct shots, short,
-unknown and straight deliveries, goals, shots that end on the time limit, and
-each stop reason), then fills the rest at random. The `stratum` column says why
-each corner was picked.
+## 2. Draw and freeze one sample
 
-## 2. Review independently
+Diego leads the sample. One person draws it once and shares the folder; nobody
+regenerates a sample on their own machine.
 
-Each reviewer copies the sheet (`audit_asaad.csv`, `audit_diego.csv`) and does
-not discuss answers until both are finished. For each corner, look at the raw
-events:
+    python -m src.analysis.audit sample --input outputs/wc2022-euro2024-corners/corner_summary.csv outputs/leagues-2015-16-corners/corner_summary.csv --output outputs/audit-combined-primary-sample
 
-    python -m src.analysis.audit show --manifest data/ingested/<run>/batch_manifest.json --sheet outputs/audit/audit_sheet.csv --audit-id 7
+The command combines the tables and refuses duplicate `(match_id,
+corner_event_id)` keys, mixed extraction settings, and corners missing
+competition, season or date. Input order does not matter. It writes:
+
+* `audit_sheet.csv`: the blank sheet, with competition and season per corner.
+* `sample_provenance.json`: sampler version, seed (5118), quotas, population
+  size and settings, every input table's path and SHA-256 (plus its
+  `run_manifest.json` hash), the sheet's SHA-256, and the selected counts by
+  competition season and stratum, including tournament versus league corners.
+
+The output is the format `src/verify_audit.py` reads. Check that the printout
+shows both tournament and league corners before freezing. Any change to the
+sampling policy is documented before anyone reviews, never after.
+
+The sample is enriched: rare and boundary cases are drawn first (direct shots,
+short, unknown and straight deliveries, goals, shots that end on the time
+limit, and each stop reason), then the rest at random. Its error rate is not
+an unbiased estimate of corpus wide extraction accuracy; the paper must say so.
+
+Reference run (2026-11-18, code commit on this branch): 16,565 corners in the
+population, 100 sampled (7 tournament, 93 league; World Cup 3, Euro 4, La Liga
+24, Ligue 1 22, Premier League 23, Serie A 24). `src/verify_audit.py` verified
+the sheet's provenance and agreed with all 100 corners on every field.
+
+## 3. Review independently
+
+Each reviewer copies the frozen sheet (`audit_asaad.csv`, `audit_diego.csv`),
+records every judgment personally and does not share answers until both are
+finished. To see the raw events around a corner (give both manifests):
+
+    python -m src.analysis.audit show --manifest data/ingested/wc2022-euro2024/batch_manifest.json data/ingested/leagues-2015-16/batch_manifest.json --sheet outputs/audit-combined-primary-sample/audit_sheet.csv --audit-id 7
+
+The timeline shows exact timestamps, offsets from the corner, team,
+possession, start and end coordinates, pass length, height and technique, out
+flags, advantage and pressure. Add `--raw` for the full event JSON whenever a
+judgment depends on a field or precision the timeline does not show; rounded
+text is not enough to judge a 15 unit delivery or an exact time boundary.
 
 Fill each column with `y` (the extractor follows the documented rule) or `n`
-(it does not). Every `n` needs a short note.
+(it does not). Every `n` and every ambiguous case needs a note.
 
 | Column | Question |
-|---|---|
-| delivery_ok | Is `delivery_category` what the rules give? Short: ground pass ending within the short limit; otherwise the technique (inswinging, outswinging, straight) or unknown when missing; direct shot when the corner itself is a shot. |
-| shot_ok | Does `shot_count` equal the shots inside the chain as the rules define it? |
+| --- | --- |
+| delivery_ok | Is `delivery_category` what the rules give? Direct shot when the corner itself is a shot; short when it is a ground pass ending within the short limit; otherwise the provider technique (inswinging, outswinging, straight) or unknown when it is missing. |
+| shot_ok | Does `shot_count` equal the attacking team's shots inside the chain? |
 | goal_ok | Does `goal_count` equal the goals inside the chain? |
-| stop_ok | Is `stop_reason` the earliest ending rule that applies (goal, ball out, possession change, stoppage, new restart, period end, time limit)? |
+| stop_ok | Is `stop_reason` what the implemented boundary order gives (below)? |
 
-## 3. Agreed rule for missing "ball out" events
+### Boundary order for stop_ok
 
-StatsBomb often records no event when an off target shot goes out. Example
-(audit sample, Denmark vs Australia): shot off target at 2.7 s, goalkeeper
-"Shot Faced" at 3.1 s, next event a substitution at 19.5 s. The extractor ends
-the chain at the 15 s limit.
+Judge against the implemented rule, not a different idea of when play
+physically stopped:
 
-Rule: judge the code against the documented rule. If no event inside the
-window shows an earlier ending, `time_limit` is correct, so `stop_ok = y`, with
-the note "no out event". The shot and goal counts are unaffected. We report how
-many sampled chains end this way, because their recorded duration is longer
-than the real play. Changing the ending rule itself is the extractor owner's
-decision and would mean rerunning extraction and the audit.
+1. The corner itself is checked first for a direct goal or out flag.
+2. For each later event, in order: a new period, then elapsed time greater
+   than the cap, then a new restart, then a possession change, then a stoppage
+   ends the chain before that event.
+3. Goals and ball out flags are checked after an event is included.
+4. An event exactly on the cap is still included.
+
+### Missing ball out events
+
+StatsBomb often records no event when an off target shot goes out. If no
+event inside the window shows an earlier ending, `time_limit` is correct
+(`stop_ok = y`). Note "no out event" and record these cases separately. Do not
+infer an unrecorded timestamp, and do not treat chain membership as continuous
+live play. Shot and goal counts are unaffected.
+
+Before handing in, check your own sheet:
+
+    python -m src.analysis.audit check --sheet audit_asaad.csv
+
+It lists missing answers and `n` answers without a note.
 
 ## 4. Compare and resolve
 
     python -m src.analysis.audit agree --sheets audit_asaad.csv audit_diego.csv --output outputs/audit_agreement
 
-This writes percent agreement and Cohen's kappa per column (`agreement.csv`)
-and every disagreement (`disagreements.csv`). Resolve each disagreement
-together and record the final answer. Report in the paper: agreement before
-resolution, kappa, the number of confirmed extractor errors per column, and
-what was fixed.
+The command refuses unless both sheets hold the same 100 corner keys and every
+answer is filled in. It writes per column percent agreement, missing answer
+counts and Cohen's kappa (`agreement.csv`), and every disagreement
+(`disagreements.csv`). When both reviewers give one and the same label to every
+corner, kappa is reported as `undefined`, not as perfect agreement.
+
+Resolve each disagreement together and record the resolution separately from
+the original answers. Report in the paper: agreement before resolution, kappa,
+missing answers, confirmed extractor errors per column and what was fixed. Any
+confirmed extraction fix needs reviewed code, regression tests and regenerated
+affected outputs with recorded provenance.
