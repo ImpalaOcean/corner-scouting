@@ -41,6 +41,15 @@ def load_run(folder, input_override=None):
     if not manifest_path.exists():
         raise AnalysisError(f'not an analysis output folder: {folder}')
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    # Older Windows runs used str(relative_path), so keys contain backslashes.
+    # Normalize identifiers in memory; never rewrite historical receipts.
+    normalized = {}
+    for name, expected in manifest.get('outputs_sha256', {}).items():
+        name = name.replace('\\', '/')
+        if name in normalized:
+            raise AnalysisError('duplicate normalized artifact path')
+        normalized[name] = expected
+    manifest['outputs_sha256'] = normalized
     warnings = []
     if manifest.get('status') not in (None, 'complete'):
         raise AnalysisError(f'analysis is not complete: {folder}')

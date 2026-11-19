@@ -294,6 +294,11 @@ def window_table(runs):
     return out
 
 
+def window_provenance(runs):
+    return [{'folder': str(run['folder']),
+             'warnings': list(run['verified_run']['provenance_warnings'])} for run in runs]
+
+
 # Review checks
 
 def review_checks(run, state, team_rows):
@@ -524,6 +529,8 @@ def markdown(overall_rows, comp_rows, comp_elig, window_rows, checks):
               f"of {pt['shot']['teams_with_interval']}; above zero: "
               f"{pt['shot']['interval_above_zero']}.", '']
     lines += ['* Provenance warning: ' + w for w in checks.get('provenance_warnings', [])]
+    for entry in checks.get('window_provenance', []):
+        lines += [f"* Provenance warning ({entry['folder']}): {w}" for w in entry['warnings']]
     return '\n'.join(lines)
 
 
@@ -546,7 +553,9 @@ def main():
         overall_rows = overall(run)
         comp_rows = by_competition(state, args.bootstrap, args.seed)
         checks = review_checks(run, state, team_rows)
-        window_rows = window_table([run] + [load_run(f) for f in args.windows]) if args.windows else []
+        window_runs = [run] + [load_run(f) for f in args.windows] if args.windows else []
+        window_rows = window_table(window_runs) if window_runs else []
+        checks['window_provenance'] = window_provenance(window_runs)
         with new_output_directory(args.output) as staging:
             write_csv(staging / 'eligibility_by_competition.csv',
                       list(comp_elig[0].keys()) if comp_elig else [], comp_elig)

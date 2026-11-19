@@ -81,6 +81,27 @@ class ReportEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(AnalysisError, 'incompatible analysis control'):
             report.window_table([a, b])
 
+    def test_windows_artifact_keys_remain_hash_verified(self):
+        with tempfile.TemporaryDirectory() as temp:
+            run = Path(temp) / 'run'
+            shutil.copytree(self.runs[0], run)
+            path = run / 'analysis_manifest.json'
+            meta = json.loads(path.read_text())
+            meta['outputs_sha256'] = {k.replace('/', '\\'): v for k, v in meta['outputs_sha256'].items()}
+            path.write_text(json.dumps(meta))
+            report.load_run(run)
+            artifact = run / 'evaluation/evaluation_differences.csv'
+            artifact.write_bytes(artifact.read_bytes() + b'\n')
+            with self.assertRaisesRegex(AnalysisError, 'artifact hash mismatch'):
+                report.load_run(run)
+
+    def test_alternative_warnings_are_retained_per_run(self):
+        runs = [report.load_run(p) for p in self.runs]
+        runs[1]['verified_run']['provenance_warnings'].append('Original input unavailable')
+        entries = report.window_provenance(runs)
+        self.assertIn('Original input unavailable', entries[1]['warnings'])
+        self.assertNotIn('Original input unavailable', entries[0]['warnings'])
+
     def test_window_population_and_threshold_mismatch_rejected(self):
         for field, value in (('invariants_sha256', 'different'), ('short_limit', 999)):
             with self.subTest(field=field):
@@ -129,6 +150,23 @@ class FrozenAuditTests(unittest.TestCase):
     def test_complete_copies_match_master(self):
         audit.validate_frozen_sheets(self.master, [self.answers, copy.deepcopy(self.answers)])
         self.assertEqual(audit.agreement(self.answers, self.answers)[0][0]['answered_by_both'], 100)
+
+    def test_historical_schema_is_checked_without_migration(self):
+        omitted = {'competition_name', 'season', 'short_limit'}
+        fields = [f for f in audit.SHEET_FIELDS if f not in omitted]
+        rows = [{k: v for k, v in row.items() if k in fields}
+                for row in audit._read_sheet(self.master).values()]
+        with self.master.open('w', newline='') as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(rows)
+        self.provenance.write_text(json.dumps({'artifacts': {'audit_sheet.csv': {
+            'sha256': hashlib.sha256(self.master.read_bytes()).hexdigest()}}}))
+        sheets = [{r['audit_id']: dict(r, **{f: 'y' for f in audit.REVIEW_FIELDS}) for r in rows}]
+        audit.validate_frozen_sheets(self.master, sheets)
+        sheets[0]['1']['shot_count'] = '999'
+        with self.assertRaisesRegex(AnalysisError, 'frozen corner fields'):
+            audit.validate_frozen_sheets(self.master, sheets)
 
     def test_equally_truncated_sheets_are_rejected(self):
         del self.answers['100']

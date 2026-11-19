@@ -283,7 +283,12 @@ def validate_frozen_sheets(master_path, sheets):
     master = _read_sheet(master_path)
     if len(master) != SAMPLE_SIZE:
         raise AnalysisError('frozen master must contain exactly 100 corners')
-    fixed = [f for f in SHEET_FIELDS if f not in REVIEW_FIELDS + ['notes']]
+    # Judge against the authenticated original schema, not columns introduced
+    # after that sample was frozen. Never migrate a completed reviewer sheet.
+    fixed = [f for f in next(iter(master.values())) if f not in REVIEW_FIELDS + ['notes']]
+    required = set(SHEET_FIELDS) - set(REVIEW_FIELDS + ['notes', 'competition_name', 'season', 'short_limit'])
+    if not required <= set(fixed):
+        raise AnalysisError('frozen master lacks required historical corner fields')
     for sheet in sheets:
         if set(sheet) != set(master):
             raise AnalysisError('reviewer sheet differs from frozen master population')
