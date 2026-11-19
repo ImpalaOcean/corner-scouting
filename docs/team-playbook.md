@@ -8,7 +8,7 @@ This repository is organized around a shared data contract and five parallel wor
 | --- | --- | --- | --- | --- |
 | Utkarsh Kohli | `src/data/` | Data acquisition, caching, and ingestion | Working loader for sample StatsBomb data | By November 1 |
 | Diego Fuentes | `src/corners/` | Corner extraction and canonical corner table | Extracted corner table from sample match | By November 1 |
-| Asaad Faris Husein | `src/analysis/` | Metrics, analysis, and validation | Baseline analysis notebook or script | By November 1 |
+| Asaad Faris Husein | `src/analysis/` | Team statistics, predictive evaluation, uncertainty and sensitivity; analysis review; independent 100 corner audit (with Diego); dossier evaluation (with Mohamed) | Analysis module (merged); final league results, tables and figures; human audit review by November 23; checked results and paper text by November 27 | Ongoing to December 14 |
 | Ebtesam Aloubid | `src/setups/` | Setup patterns and StatsBomb 360 routine classification | Setup summary table | By November 1 |
 | Mohamed Hamail | `src/dossier/` | Reporting, visual summaries, and team dossiers | Draft dossier for one team | By November 1 |
 

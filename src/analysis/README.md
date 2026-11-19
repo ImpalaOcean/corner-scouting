@@ -17,7 +17,13 @@ average? Full method and first results: `docs/evaluation.md`.
   selection on validation, log loss and Brier score on test, bootstrap
   intervals, reliability and stability tables.
 * `compare.py`: sensitivity comparison across extraction settings.
-* `audit.py`: the 100 corner audit (sample, show raw events, agreement).
+* `report.py`: paper tables, figures and review checks from a finished run;
+  rebuilds the test scores and refuses to report if they differ from the run.
+* `audit.py`: the 100 corner audit. `sample` combines the primary tables and
+  writes the frozen sheet plus `sample_provenance.json` (read by
+  `src/verify_audit.py`); `show` prints exact raw events across manifests
+  (`--raw` for full JSON); `check` lists unfinished answers; `agree` computes
+  agreement and kappa (undefined for constant labels) on complete sheets only.
   Protocol: `docs/audit-protocol.md`.
 * `__main__.py`: the command that runs everything.
 
