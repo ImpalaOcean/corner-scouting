@@ -69,7 +69,7 @@ class TimelineTests(unittest.TestCase):
     def test_window_and_period_limits(self):
         events = [self.event(0, 0), self.event(1, 5), self.event(2, 24), self.event(3, 26),
                   self.event(4, 27, 2)]
-        self.assertEqual(len(event_timeline(events, 'e0', seconds=25)), 3)
+        self.assertEqual(len(event_timeline(events, 'e0', seconds=25)), 4)
         with self.assertRaises(AnalysisError):
             event_timeline(events, 'missing')
 

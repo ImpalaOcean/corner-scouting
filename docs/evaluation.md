@@ -214,6 +214,17 @@ predict its later rate better than the league average in this corpus.
 
 ## Running
 
+### Report evidence safeguards
+
+The report verifies the recorded input and artifact hashes before reading saved
+scores, paired differences, intervals, team results or parameter-selection tables.
+It refuses evaluation artifacts without recorded hashes. `--input` can relocate
+the source table but cannot bypass its recorded hash or population contract.
+Any permitted legacy provenance limitations are written into the report checks
+and Markdown. Alternative-window reports use the same population, invariant
+attributes, settings, code and analysis-control checks as `src.analysis.compare`.
+The report does not alter or regenerate saved experiments.
+
 Reproduce the final tables and figures (after the league extraction runs in
 `docs/league-2015-16-runs.md`):
 

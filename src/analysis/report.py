@@ -35,6 +35,7 @@ from .evaluation import (EPSILON, METHODS, SCORED_CATEGORIES, _by_match,
                          delivery_probabilities, eligible_teams, fit_history,
                          score_corners)
 from .publication import new_output_directory
+from .compare import load_run as verified_run, compare_runs
 from .summary import (MIN_CORNERS, MIN_MATCHES, AnalysisError, bootstrap_interval,
                       chronological_splits, load_corners, write_csv)
 
@@ -58,19 +59,27 @@ def _float(value):
     return None if value in (None, '') else float(value)
 
 
-def load_run(folder):
+def load_run(folder, input_override=None):
     folder = Path(folder)
     manifest_path = folder / 'analysis_manifest.json'
     if not manifest_path.exists():
         raise AnalysisError(f'not an analysis output folder: {folder}')
-    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    verified = verified_run(folder, input_override=input_override)
+    manifest = verified['manifest']
     if manifest.get('date_cutoff'):
         raise AnalysisError(f'{folder} is a prematch (cutoff) run with no evaluation')
     evaluation = folder / 'evaluation'
     if not evaluation.exists():
         raise AnalysisError(f'{folder} has no evaluation folder')
+    required = ('evaluation_summary.csv', 'evaluation_differences.csv',
+                'team_evaluation.csv', 'alpha_selection.csv')
+    for name in required:
+        if 'evaluation/' + name not in manifest.get('outputs_sha256', {}):
+            raise AnalysisError(f'missing recorded artifact hash: evaluation/{name}; '
+                                'cannot verify report evidence')
     return {
         'folder': folder, 'manifest': manifest,
+        'verified_run': verified,
         'summary': _read_csv(evaluation / 'evaluation_summary.csv'),
         'differences': _read_csv(evaluation / 'evaluation_differences.csv'),
         'teams': _read_csv(evaluation / 'team_evaluation.csv'),
@@ -272,6 +281,10 @@ def _window_label(manifest):
 
 
 def window_table(runs):
+    # Use the same population, invariant, control and code checks as the
+    # standalone window comparator before copying any results into a report.
+    if len(runs) > 1:
+        compare_runs([r['verified_run'] for r in runs])
     out = []
     for run in runs:
         meta = run['manifest'].get('evaluation') or {}
@@ -318,6 +331,7 @@ def review_checks(run, state, team_rows):
                           'expected_by_chance_each_side': round(0.025 * len(with_ci), 1)}
     return {
         'rebuilt_scores_match_saved_run': True,
+        'provenance_warnings': run['verified_run']['provenance_warnings'],
         'alpha': alpha, 'beta': beta,
         'alpha_at_grid_max': alpha == ALPHA_GRID_MAX,
         'beta_at_grid_max': beta == ALPHA_GRID_MAX,
@@ -509,6 +523,7 @@ def markdown(overall_rows, comp_rows, comp_elig, window_rows, checks):
               f"* Per team shot intervals below zero: {pt['shot']['interval_below_zero']} "
               f"of {pt['shot']['teams_with_interval']}; above zero: "
               f"{pt['shot']['interval_above_zero']}.", '']
+    lines += ['* Provenance warning: ' + w for w in checks.get('provenance_warnings', [])]
     return '\n'.join(lines)
 
 
@@ -524,7 +539,7 @@ def main():
     parser.add_argument('--seed', type=int, default=5118)
     args = parser.parse_args()
     try:
-        run = load_run(args.run)
+        run = load_run(args.run, input_override=args.input)
         state = rebuild(run, _input_path(run, args.input))
         check_reproduction(run, state)
         comp_elig, team_rows = eligibility(state)

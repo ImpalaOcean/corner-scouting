@@ -35,7 +35,7 @@ def _label(manifest):
     return f"window {window}, short {float(manifest.get('short_limit') or 0):g}"
 
 
-def load_run(folder):
+def load_run(folder, input_override=None):
     folder = Path(folder)
     manifest_path = folder / 'analysis_manifest.json'
     if not manifest_path.exists():
@@ -54,7 +54,7 @@ def load_run(folder):
         if sha256(contract_path) != manifest['input_contract_sha256']:
             raise AnalysisError('input contract hash mismatch')
         saved = json.loads(contract_path.read_text(encoding='utf-8'))
-    source = Path(manifest['input'])
+    source = Path(input_override) if input_override is not None else Path(manifest['input'])
     if not source.is_absolute():
         # Old manifests stored the path relative to the invocation's repository.
         source = Path.cwd() / source

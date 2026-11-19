@@ -57,7 +57,9 @@ finished. To see the raw events around a corner (give both manifests):
 
     python -m src.analysis.audit show --manifest data/ingested/wc2022-euro2024/batch_manifest.json data/ingested/leagues-2015-16/batch_manifest.json --sheet outputs/audit-combined-primary-sample/audit_sheet.csv --audit-id 7
 
-The timeline shows exact timestamps, offsets from the corner, team,
+The timeline and `--raw` retain the first event beyond the context time/period
+boundary so it can be inspected; that event is not thereby included in the extracted
+chain. The timeline shows exact timestamps, offsets from the corner, team,
 possession, start and end coordinates, pass length, height and technique, out
 flags, advantage and pressure. Add `--raw` for the full event JSON whenever a
 judgment depends on a field or precision the timeline does not show; rounded
@@ -101,10 +103,12 @@ It lists missing answers and `n` answers without a note.
 
 ## 4. Compare and resolve
 
-    python -m src.analysis.audit agree --sheets audit_asaad.csv audit_diego.csv --output outputs/audit_agreement
+    python -m src.analysis.audit agree --sheets audit_asaad.csv audit_diego.csv --master outputs/audit-combined-primary-sample/audit_sheet.csv --output outputs/audit_agreement
 
-The command refuses unless both sheets hold the same 100 corner keys and every
-answer is filled in. It writes per column percent agreement, missing answer
+The command verifies the original master against its adjacent `sample_provenance.json`,
+rejects duplicate IDs/keys and changes to frozen columns, and refuses unless both
+sheets match all 100 master corners and every
+answer is filled in and each `n` has a note. It writes per column percent agreement, missing answer
 counts and Cohen's kappa (`agreement.csv`), and every disagreement
 (`disagreements.csv`). When both reviewers give one and the same label to every
 corner, kappa is reported as `undefined`, not as perfect agreement.
