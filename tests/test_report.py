@@ -87,7 +87,7 @@ class ReportTests(unittest.TestCase):
         result = run(['src.analysis.report', '--run', str(self.analyses[15]), '--input',
                       str(changed), '--output', str(self.temp / 'bad')])
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('do not match', result.stderr)
+        self.assertIn('input hash mismatch', result.stderr)
         self.assertFalse((self.temp / 'bad').exists())
 
 

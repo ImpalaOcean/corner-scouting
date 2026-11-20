@@ -35,12 +35,21 @@ def _label(manifest):
     return f"window {window}, short {float(manifest.get('short_limit') or 0):g}"
 
 
-def load_run(folder):
+def load_run(folder, input_override=None):
     folder = Path(folder)
     manifest_path = folder / 'analysis_manifest.json'
     if not manifest_path.exists():
         raise AnalysisError(f'not an analysis output folder: {folder}')
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    # Older Windows runs used str(relative_path), so keys contain backslashes.
+    # Normalize identifiers in memory; never rewrite historical receipts.
+    normalized = {}
+    for name, expected in manifest.get('outputs_sha256', {}).items():
+        name = name.replace('\\', '/')
+        if name in normalized:
+            raise AnalysisError('duplicate normalized artifact path')
+        normalized[name] = expected
+    manifest['outputs_sha256'] = normalized
     warnings = []
     if manifest.get('status') not in (None, 'complete'):
         raise AnalysisError(f'analysis is not complete: {folder}')
@@ -54,7 +63,7 @@ def load_run(folder):
         if sha256(contract_path) != manifest['input_contract_sha256']:
             raise AnalysisError('input contract hash mismatch')
         saved = json.loads(contract_path.read_text(encoding='utf-8'))
-    source = Path(manifest['input'])
+    source = Path(input_override) if input_override is not None else Path(manifest['input'])
     if not source.is_absolute():
         # Old manifests stored the path relative to the invocation's repository.
         source = Path.cwd() / source

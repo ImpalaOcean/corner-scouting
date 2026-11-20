@@ -12,7 +12,7 @@ Three steps, all from the repository root:
     python -m src.analysis.audit show --manifest data/ingested/wc2022-euro2024/batch_manifest.json data/ingested/leagues-2015-16/batch_manifest.json --sheet outputs/audit-combined-primary-sample/audit_sheet.csv --audit-id 7
 
 3. Compare the two filled sheets (refuses while any answer is missing):
-    python -m src.analysis.audit agree --sheets audit_asaad.csv audit_diego.csv --output outputs/audit_agreement
+    python -m src.analysis.audit agree --sheets audit_asaad.csv audit_diego.csv --master outputs/audit-combined-primary-sample/audit_sheet.csv --output outputs/audit_agreement
 """
 
 import argparse
@@ -208,13 +208,16 @@ def event_timeline(events, corner_event_id, seconds=SHOW_SECONDS):
     t0 = _seconds(corner['timestamp'])
     lines = []
     for e in events[start:]:
-        if e.get('period') != corner.get('period') or _seconds(e['timestamp']) - t0 > seconds:
-            break
+        boundary = (e.get('period') != corner.get('period')
+                    or _seconds(e['timestamp']) - t0 > seconds)
         lines.append(f"{e['timestamp']} (+{_seconds(e['timestamp']) - t0:.3f}s)  "
                      f"{(e.get('team') or {}).get('name', ''):<18.18} "
                      f"{e['type']['name']:<16.16} poss {e.get('possession', ''):<4} "
                      f"{(e.get('player') or {}).get('name', ''):<24.24} {_detail(e)}"
                      f"  [{e['id']}]")
+        if boundary:
+            lines[-1] += ' [context boundary; not an included-chain judgment]'
+            break
     return lines
 
 
@@ -226,9 +229,9 @@ def raw_events(events, corner_event_id, seconds=SHOW_SECONDS):
     t0 = _seconds(corner['timestamp'])
     out = []
     for e in events[start:]:
+        out.append(e)
         if e.get('period') != corner.get('period') or _seconds(e['timestamp']) - t0 > seconds:
             break
-        out.append(e)
     return out
 
 
@@ -250,7 +253,49 @@ def find_events_file(manifest_paths, match_id):
 
 def _read_sheet(path):
     with Path(path).open(newline='', encoding='utf-8-sig') as handle:
-        return {row['audit_id']: row for row in csv.DictReader(handle)}
+        reader = csv.DictReader(handle)
+        if not {'audit_id', 'match_id', 'corner_event_id'} <= set(reader.fieldnames or []):
+            raise AnalysisError('sheet lacks audit/corner identity columns')
+        sheet, corners = {}, set()
+        for row in reader:
+            audit_id = row['audit_id']
+            key = (row['match_id'], row['corner_event_id'])
+            if (not audit_id or not audit_id.isdigit() or not all(key)
+                    or audit_id in sheet or key in corners):
+                raise AnalysisError('blank or duplicate audit ID/corner key')
+            sheet[audit_id] = row
+            corners.add(key)
+        return sheet
+
+
+def validate_frozen_sheets(master_path, sheets):
+    """Require the original hash-verified 100-row master, including all values
+    being judged. Matching two equally truncated/modified copies is insufficient.
+    """
+    master_path = Path(master_path)
+    provenance_path = master_path.with_name('sample_provenance.json')
+    if not provenance_path.is_file():
+        raise AnalysisError('frozen master requires sample_provenance.json beside it')
+    provenance = json.loads(provenance_path.read_text(encoding='utf-8'))
+    expected = provenance.get('artifacts', {}).get('audit_sheet.csv', {}).get('sha256')
+    if not expected or _sha256(master_path) != expected:
+        raise AnalysisError('frozen master hash mismatch')
+    master = _read_sheet(master_path)
+    if len(master) != SAMPLE_SIZE:
+        raise AnalysisError('frozen master must contain exactly 100 corners')
+    # Judge against the authenticated original schema, not columns introduced
+    # after that sample was frozen. Never migrate a completed reviewer sheet.
+    fixed = [f for f in next(iter(master.values())) if f not in REVIEW_FIELDS + ['notes']]
+    required = set(SHEET_FIELDS) - set(REVIEW_FIELDS + ['notes', 'competition_name', 'season', 'short_limit'])
+    if not required <= set(fixed):
+        raise AnalysisError('frozen master lacks required historical corner fields')
+    for sheet in sheets:
+        if set(sheet) != set(master):
+            raise AnalysisError('reviewer sheet differs from frozen master population')
+        for key, row in master.items():
+            if any(f not in row or sheet[key].get(f) != row[f] for f in fixed):
+                raise AnalysisError(f'audit {key}: frozen corner fields were changed')
+    return master
 
 
 def _answer(value):
@@ -302,12 +347,14 @@ def agreement(sheet_a, sheet_b, require_complete=True):
         if (sheet_a[key]['match_id'], sheet_a[key]['corner_event_id']) != \
                 (sheet_b[key]['match_id'], sheet_b[key]['corner_event_id']):
             raise AnalysisError(f'audit_id {key} points at different corners in the two sheets')
-    missing_a, _ = missing_answers(sheet_a)
-    missing_b, _ = missing_answers(sheet_b)
+    missing_a, unexplained_a = missing_answers(sheet_a)
+    missing_b, unexplained_b = missing_answers(sheet_b)
     if require_complete and (missing_a or missing_b):
         raise AnalysisError(f'sheets are incomplete: {len(missing_a)} missing answers in the first, '
                             f'{len(missing_b)} in the second (first missing: '
                             f'{(missing_a or missing_b)[0]}); finish both reviews first')
+    if require_complete and (unexplained_a or unexplained_b):
+        raise AnalysisError('n judgments require a note before agreement is reported')
     summary, disagreements = [], []
     for field in REVIEW_FIELDS:
         both = [(_answer(sheet_a[k][field]), _answer(sheet_b[k][field])) for k in sheet_a]
@@ -365,6 +412,8 @@ def main():
     c.add_argument('--sheet', type=Path, required=True)
     a = sub.add_parser('agree', help='compare two filled sheets')
     a.add_argument('--sheets', type=Path, nargs=2, required=True)
+    a.add_argument('--master', type=Path, required=True,
+                   help='original frozen audit_sheet.csv, beside sample_provenance.json')
     a.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
 
@@ -416,8 +465,9 @@ def main():
             for key, field in unexplained[:20]:
                 print(f'  needs note: audit {key} {field}')
         else:
-            summary, disagreements = agreement(_read_sheet(args.sheets[0]),
-                                               _read_sheet(args.sheets[1]))
+            sheets = [_read_sheet(p) for p in args.sheets]
+            validate_frozen_sheets(args.master, sheets)
+            summary, disagreements = agreement(*sheets)
             with new_output_directory(args.output) as staging:
                 write_csv(staging / 'agreement.csv', AGREEMENT_FIELDS, summary)
                 write_csv(staging / 'disagreements.csv', DISAGREEMENT_FIELDS, disagreements)
