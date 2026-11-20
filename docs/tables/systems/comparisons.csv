@@ -1,0 +1,9 @@
+corpus,window,short_limit,matches,corners,shots,goals,missing_keys,extra_keys,field_mismatches,provenance_errors,status
+tournament,10,15,115,1083,353,24,0,0,0,0,match
+tournament,15,15,115,1083,390,26,0,0,0,0,match
+tournament,20,15,115,1083,399,27,0,0,0,0,match
+tournament,uncapped,15,115,1083,446,31,0,0,0,0,match
+league,10,15,1517,15482,4951,428,0,0,0,0,match
+league,15,15,1517,15482,5368,464,0,0,0,0,match
+league,20,15,1517,15482,5598,486,0,0,0,0,match
+league,uncapped,15,1517,15482,6033,517,0,0,0,0,match

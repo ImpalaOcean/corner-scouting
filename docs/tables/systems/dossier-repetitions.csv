@@ -1,0 +1,13 @@
+iteration,phase,stage,seconds
+0,warmup,selection,0.6195335000520572
+0,warmup,build,0.45808239991310984
+1,measured,selection,0.6320177000015974
+1,measured,build,0.4594709000084549
+2,measured,selection,0.6184125998988748
+2,measured,build,0.452695699990727
+3,measured,selection,0.6094745000591502
+3,measured,build,0.4526255000382662
+4,measured,selection,0.6007090000202879
+4,measured,build,0.4487143000587821
+5,measured,selection,0.6127527999924496
+5,measured,build,0.44665689999237657

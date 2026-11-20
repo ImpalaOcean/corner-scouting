@@ -1,0 +1,7 @@
+corpus,competition_id,competition,matches,events,corners,frame_status,matched_frames
+tournament,43,FIFA World Cup,64,234637,571,requested,302
+tournament,55,UEFA Euro,51,187924,512,requested,290
+league,2,Premier League,380,1313773,4108,not_requested,0
+league,7,Ligue 1,377,1358593,3591,not_requested,0
+league,11,La Liga,380,1295354,3842,not_requested,0
+league,12,Serie A,380,1353739,3941,not_requested,0
