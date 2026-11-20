@@ -119,3 +119,7 @@ The current suite discovered 160 tests: 158 passed and two optional Parquet test
 ## November 14 implementation update
 
 The dossier dependency has been updated following PR #24. The first SQL extractor, field-level checker and sample runner are implemented on a separate feature branch; execution instructions and validation scope are recorded in `docs/reproducibility.md` and `docs/systems-sample-validation.md`. Larger-corpus comparisons, committed clean-checkout reproduction and dossier benchmarks remain later deliverables.
+
+## November 20 results handoff
+
+Full tournament/league comparisons across all four windows, separate clean-checkout reproduction, repeated extraction benchmarks, and separate dossier selection/build timings are complete. Results, limitations, artifact fingerprints and paper material are in `docs/systems-results.md`, `docs/systems-paper-section.md` and `docs/tables/systems/`. The SQL prototype is slower in the measured operational batch scope; correctness agreement does not imply a speedup. Upload of the verified evidence ZIP to the project Drive was blocked by folder permissions; an editor must upload it. Team review/merge remains pending.

@@ -1,0 +1,17 @@
+{
+  "archive": "C:\\Users\\Moham\\OneDrive\\Desktop\\School\\comp\\corner-scouting\\outputs\\nov27\\evidence-publication\\systems-evidence-2026-11-20.zip",
+  "sha256": "55b0990f0fe0866edb9123ef2e35074325814b69797667af48b85c6908d0d4a8",
+  "bytes": 44880751,
+  "files": 260,
+  "packaging_commit": "24f08618d9d4e728a5cdd2ca22b4e82beff20bb2",
+  "clean_dossier_json_equal": true,
+  "measured_source_hashes_verified": true,
+  "drive_upload": {
+    "status": "blocked",
+    "reason": "Connected Google Drive account lacks permission to add files to the project folder",
+    "http_status": 403,
+    "parent_folder_id": "1VqjDC-j2P2vSXZmH6q83Rtac_39KSRYG",
+    "local_archive": "C:\\Users\\Moham\\OneDrive\\Desktop\\School\\comp\\corner-scouting\\outputs\\nov27\\evidence-publication\\systems-evidence-2026-11-20.zip",
+    "sha256": "55b0990f0fe0866edb9123ef2e35074325814b69797667af48b85c6908d0d4a8"
+  }
+}

@@ -27,4 +27,4 @@ Planned outputs
 
 Installation and execution
 
-Installation and execution instructions will be added once there is working code. See `docs/project-plan.md` for the project plan and folder organization.
+See [the execution guide](docs/reproducibility.md) for installation and sample commands, [the experiment protocol](docs/systems-experiments.md) for full-corpus checks and benchmarks, and [the measured systems results](docs/systems-results.md) for validation, clean-checkout reproduction, timings and evidence access.
