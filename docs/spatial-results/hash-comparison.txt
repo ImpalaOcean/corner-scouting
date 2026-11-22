@@ -1,0 +1,19 @@
+﻿MINE  : 682543 bytes, sha256 9d6229d8bd1781821cd54cbe9aa14e4f3c1e755bc62272a8c288ed543c5e1ea9
+   line endings: CRLF=1084, lone LF=0, BOM=True
+THEIRS: 680377 bytes, sha256 343938466196c8ad377d05eeafd0f9726ac70d269329f4fb853e9b5ac6bec0b7
+   line endings: CRLF=1084, lone LF=0, BOM=True
+
+== Byte level ==
+identical bytes: False
+identical after converting CRLF -> LF: False
+first differing byte at offset 668
+  MINE  : b'bd0-851d-ad4227767a9a""]",ball_out,15,15.0,43,FIFA World Cup,106,2022,2022-11-20'
+  THEIRS: b'bd0-851d-ad4227767a9a""]",ball_out,15,15,43,FIFA World Cup,106,2022,2022-11-20,Q'
+
+== Every field ==
+same columns, same order: True (35 vs 35 columns)
+rows: 1083 vs 1083; unique keys: 1083 vs 1083
+keys only in MINE: 0  only in THEIRS: 0
+same row order: True
+cells compared: 37905; cells that differ: 1083
+  short_limit: 1083 differ; e.g. [(('3941022', 'ddc500eb-0576-40bb-b327-d937473f79f6'), '15.0', '15'), (('3938640', 'f2b85161-2d78-42f5-8d58-56d61a41af4b'), '15.0', '15'), (('3857285', '426fabed-79fa-416b-85a6-ccaa77d43564'), '15.0', '15')]
