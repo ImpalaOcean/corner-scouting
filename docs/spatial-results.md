@@ -1,54 +1,97 @@
 # Spatial Results: 360 Static Setup Analysis
 
+Exploratory, retrospective results. All numbers below were produced by the commands in the
+last section and can be checked against `docs/spatial-results/`.
+
 ## Methods
-We joined extracted corner events with StatsBomb 360 freeze frames using the canonical join key `(match_id, corner_event_id)`. Corners were normalized by mirroring bottom-sided corners to a uniform top-sided perspective. A corner was considered eligible for spatial analysis only if it had a matching frame, the corner coordinate was within 3 yards of a flag, at least 5 players were visible, and at least 50% of the penalty box area was inside the visible-area polygon. We computed a 9-zone occupancy vector for attackers and defenders and applied deterministic K-means clustering (k=4 primary). To assess stability, we calculated the Adjusted Rand Index (ARI) on ten 80% subsamples.
+Corner events were joined to StatsBomb 360 freeze frames on `(match_id, corner_event_id)`.
+Bottom-side corners were mirrored so all corners face the same way. A corner is usable if it
+has a matching frame, its location is within 3 yards of a corner flag, at least 5 players
+are visible, and at least 50% of the penalty box lies inside the visible-area polygon.
+Each usable corner becomes an 18-number vector: counts of attacking and defending outfield
+players in the nine zones (z1 to z9) of the penalty box (the corner taker and keepers are
+excluded). Deterministic k-means (k=4 primary) was fitted once on all usable corners from
+both tournaments. Stability is the mean adjusted Rand index (ARI) over ten 80% subsamples.
+ARI measures whether resampling reproduces the same grouping; it does not show that the
+groups are meaningful tactical setups.
 
 ## Results
-Out of 1,083 tournament corners (World Cup 2022 and Euro 2024), 592 had a matching 360 frame (54.7%), and 591 were usable after excluding one frame for low visibility. The pooled clustering yielded four distinct static setups (sizes: 228, 163, 115, 85) with a mean subsample stability of ARI = 0.864. This indicates strong structural consistency across subsamples.
+Of 1,083 corners (World Cup 2022 and Euro 2024), 592 (54.7%) had a matching 360 frame and 591
+were usable; one matched frame was excluded for low visibility (box coverage 0.265).
+The pooled fit gave four clusters of 228, 163, 115 and 85 corners, with stability ARI = 0.864.
+The 591 usable corners were split into 56 team profiles (32 World Cup, 24 Euro). No team has
+more than 24 usable corners, so every team profile is a small sample.
+Per `docs/tournament-360-delivery-coverage.md`, short corners are matched far less often
+(World Cup 29.2%, Euro 32.3%) than other deliveries (55.9% and 60.0%), so the clusters
+under-represent short-corner setups. Whether frames are missing at random is unknown.
 
-These clusters were used to generate 56 team profiles (32 World Cup, 24 Euro). Because every team had fewer than 100 eligible corners, all team profiles are flagged as exploratory. Furthermore, short corners had notably lower 360 frame matching rates (~29-32%) compared to non-short corners (~56-60%), suggesting the clusters under-represent short-corner setups.
+![Figure 1](spatial-results/figure1_cluster_zone_means.png)
 
-**Figure 1:** Heatmap of the mean attackers per zone for the primary k=4 clusters. 
-*(Caption: Cluster 0 and 1 show heavy central occupation (Zones 5, 6), while Cluster 3 shows a distinct near-post overload (Zone 6).)*
+**Figure 1.** Mean number of players per penalty-box zone for each cluster (values from
+`setup_report.json`). Attackers: cluster 0 has means of 3.33 in z5 and 1.27 in z6; cluster 1
+3.21 in z5 and 1.23 in z4; cluster 2 2.32 in z4 and 1.43 in z5; cluster 3 3.06 in z6 and
+1.35 in z5. Defenders: z6 means are 4.10, 1.85, 2.56 and 6.00 for clusters 0 to 3; cluster 1
+has 5.03 in z5. Clusters are described by these numbers only; no tactical labels are assigned.
 
-**Figure 2:** Team distribution across the 4 shared clusters.
-*(Caption: The 56 team profiles show varying preferences for the four pooled setups, though all remain flagged as exploratory due to small sample sizes.)*
+![Figure 2](spatial-results/figure2_team_cluster_shares.png)
 
-## Hash Difference Investigation
-My generated `corner_summary.csv` SHA-256 is `9D6229D8...`, whereas the reference is `343938...`. 
-Upon investigation:
-- **Schema:** Both files contain the exact same 35 columns in the same order.
-- **Keys:** Both files contain exactly 1,083 rows with identical `(match_id, corner_event_id)` pairs.
-- **Fields:** A manual comparison of 100 random rows showed identical values for all delivery, outcome, and coordinate fields.
-- **Conclusion:** The hash difference is attributed to OS-level serialization (Windows CRLF vs Linux LF line endings). The underlying analytical data is identical.
+**Figure 2.** Each team's share of its usable corners in each shared cluster (n = usable
+corners, between 1 and 24). Shares from teams with few corners are not interpretable; for
+example a team with one usable corner shows 100% in one cluster. No intervals are computed.
 
-## Sensitivity Analysis
-The results were robust to threshold changes. The table below summarizes the sensitivity checks.
+## Sensitivity analysis
+All rows use the same corner table; commands are listed below. Raw reports are in
+`docs/spatial-results/reports/` and the table in `docs/spatial-results/sensitivity.csv`.
 
-| Setting | Usable Frames | Clusters Found | ARI | Exploratory |
-| :--- | :--- | :--- | :--- | :--- |
-| **k=4, 50% visibility (Primary)** | 591 | 4 (228/163/115/85) | 0.864 | False |
-| k=4, 30% visibility | 591 | 4 | 0.864 | False |
-| k=4, 70% visibility | 587 | 4 | 0.864 | False |
-| k=3, 50% visibility | 591 | 3 | 0.860 | False |
-| k=5, 50% visibility | 591 | 5 | 0.871 | False |
-| k=6, 50% visibility | 591 | 6 | 0.865 | False |
+| Setting | Usable | Cluster sizes | ARI |
+| --- | ---: | --- | ---: |
+| k=4, box coverage 0.5 (primary) | 591 | 228/163/115/85 | 0.864 |
+| k=4, box coverage 0.3 | 591 | 228/163/115/85 | 0.864 |
+| k=4, box coverage 0.7 | 587 | 233/162/108/84 | 0.8589 |
+| k=3, box coverage 0.5 | 591 | 246/201/144 | 0.841 |
+| k=5, box coverage 0.5 | 591 | 184/156/105/98/48 | 0.7267 |
+| k=6, box coverage 0.5 | 591 | 167/163/79/79/55/48 | 0.7074 |
+
+Lowering the coverage threshold to 0.3 changes nothing, because the single excluded frame is
+below 0.3. At 0.7, four more frames are excluded and cluster sizes shift slightly. Among
+k = 3 to 6, k=4 has the highest stability; k=5 and k=6 are less stable and create a
+48-corner cluster. All runs are above the implementation's 0.6 stability threshold, which is
+a technical flag, not evidence that the clusters are real setups. k=4 was fixed in advance
+and not tuned.
+
+## Corner table comparison with the reference file
+My `corner_summary.csv` (SHA-256 `9d6229d8...`) differs from the reference (`343938466196...`).
+A full comparison of all 1,083 rows and 35 columns (37,905 cells,
+`docs/spatial-results/hash-comparison.txt`) shows identical keys, row order, columns and values
+except `short_limit`, which is written as `15.0` in my file and `15` in the reference file,
+in every row. This accounts for the whole 2,166-byte size difference. Line endings are
+identical (CRLF) in both. The cause of the formatting difference (code version) is not yet
+established.
 
 ## Limitations
-Clusters describe static snapshots at the moment of delivery, not player runs or marking schemes. As they were fitted using the full tournament (including future matches), they must remain **retrospective only**. A prematch dossier cannot use these clusters without refitting strictly on data prior to the match date. The 360 visible-area limits the observability of the penalty box, and missing frames cannot be assumed to be missing at random.
+Clusters describe static snapshots at delivery, not player runs or marking. They were fitted
+on the full tournaments, including later matches, so they are retrospective only; a prematch
+dossier would need a separate fit using only earlier data. Only 54.7% of corners have frames,
+short corners are under-covered, the visible area limits what is observed, and teams have
+at most 24 usable corners.
 
-## Reproduction Commands and Versions
-- **Python Version:** 3.13.0
-- **Source Revision:** `4b73468fc5b0f1950f9f66fada70ad3a4f9327cb`
-- **Commit Hash:** `f8b66b0616664a3c90b28d12197e95b7e2cba724`
+## Reproduction
+Python 3.13.0, repository commit f8b66b0616664a3c90b28d12197e95b7e2cba724, data revision
+4b73468fc5b0f1950f9f66fada70ad3a4f9327cb.
 
-**Commands run:**
 ```powershell
-# Primary Extraction
+python -m src.data --config configs/data/wc2022-euro2024.json --parquet
 python src/run_corner_batch.py --manifest data/ingested/wc2022-euro2024/batch_manifest.json --output outputs/utkarsh-corners --window 15 --short-limit 15 --parquet
+python -m src.profile_tournament_360 --corners outputs/utkarsh-corners/corner_summary.csv --coverage-manifest data/ingested/wc2022-euro2024/coverage_manifest.json --frames-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-360-coverage
+python -m src.profile_tournament_setups --corners outputs/utkarsh-corners/corner_summary.csv --coverage-manifest data/ingested/wc2022-euro2024/coverage_manifest.json --frames-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --coverage-profile outputs/utkarsh-360-coverage/provenance.json --output outputs/utkarsh-shared-clusters
 
-# Primary Setup Pipeline
+# Sensitivity (each with a new output folder)
 python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k4 --k 4
+python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k4-cov30 --k 4 --min-box-coverage 0.3
+python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k4-cov70 --k 4 --min-box-coverage 0.7
+python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k3 --k 3
+python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k5 --k 5
+python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k6 --k 6
 
-# Sensitivity (Visibility)
-python -m src.profile_tournament_360 --corners outputs/utkarsh-corners/corner_summary.csv --coverage-manifest data/ingested/wc2022-euro2024/coverage_manifest.json --frames-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-360-coverage-30 --min-box-coverage 0.3
+# Table and figures
+python spatial_artifacts.py --out docs/spatial-results --primary outputs/utkarsh-setups-k4 --teams outputs/utkarsh-shared-clusters --run "Primary_k4_cov0.5=outputs/utkarsh-setups-k4" --run "k4_cov0.3=outputs/utkarsh-setups-k4-cov30" --run "k4_cov0.7=outputs/utkarsh-setups-k4-cov70" --run "k3_cov0.5=outputs/utkarsh-setups-k3" --run "k5_cov0.5=outputs/utkarsh-setups-k5" --run "k6_cov0.5=outputs/utkarsh-setups-k6"

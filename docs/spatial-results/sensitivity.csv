@@ -1,0 +1,7 @@
+setting,folder,usable,clusters,sizes,stability_ari,exploratory,caveats
+Primary_k4_cov0.5,outputs/utkarsh-setups-k4,591,4,228/163/115/85,0.864,False,
+k4_cov0.3,outputs/utkarsh-setups-k4-cov30,591,4,228/163/115/85,0.864,False,
+k4_cov0.7,outputs/utkarsh-setups-k4-cov70,587,4,233/162/108/84,0.8589,False,
+k3_cov0.5,outputs/utkarsh-setups-k3,591,3,246/201/144,0.841,False,
+k5_cov0.5,outputs/utkarsh-setups-k5,591,5,184/156/105/98/48,0.7267,False,
+k6_cov0.5,outputs/utkarsh-setups-k6,591,6,167/163/79/79/55/48,0.7074,False,

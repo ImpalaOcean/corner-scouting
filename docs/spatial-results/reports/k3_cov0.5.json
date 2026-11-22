@@ -1,0 +1,113 @@
+{
+  "schema": "setup_summary_v1",
+  "settings": {
+    "k": 3,
+    "min_box_coverage": 0.5,
+    "min_visible_players": 5,
+    "min_corners_confident": 100,
+    "min_cluster_size": 10,
+    "stability_threshold": 0.6,
+    "seed": 0
+  },
+  "corners_total": 1083,
+  "corners_usable": 591,
+  "corners_excluded": 492,
+  "excluded_by_reason": {
+    "no_360_file": 0,
+    "no_360_frame": 491,
+    "invalid_frame": 0,
+    "no_corner_location": 0,
+    "invalid_corner_location": 0,
+    "low_visibility": 1,
+    "too_few_visible_players": 0
+  },
+  "usable_fraction": 0.5457,
+  "clusters_requested": 3,
+  "clusters_found": 3,
+  "stability_ari": 0.841,
+  "exploratory": false,
+  "caveats": [],
+  "clusters": [
+    {
+      "cluster_id": 0,
+      "size": 246,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.089,
+        "2": 0.171,
+        "3": 0.037,
+        "4": 0.74,
+        "5": 3.598,
+        "6": 0.699,
+        "7": 0.033,
+        "8": 0.073,
+        "9": 0.138
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.033,
+        "2": 0.089,
+        "3": 0.041,
+        "4": 0.638,
+        "5": 4.386,
+        "6": 2.772,
+        "7": 0.305,
+        "8": 0.329,
+        "9": 0.545
+      }
+    },
+    {
+      "cluster_id": 1,
+      "size": 201,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.1,
+        "2": 0.199,
+        "3": 0.05,
+        "4": 0.498,
+        "5": 2.229,
+        "6": 2.259,
+        "7": 0.05,
+        "8": 0.065,
+        "9": 0.204
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.025,
+        "2": 0.065,
+        "3": 0.055,
+        "4": 0.741,
+        "5": 2.149,
+        "6": 5.204,
+        "7": 0.299,
+        "8": 0.244,
+        "9": 0.557
+      }
+    },
+    {
+      "cluster_id": 2,
+      "size": 144,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.188,
+        "2": 0.139,
+        "3": 0.0,
+        "4": 2.299,
+        "5": 1.583,
+        "6": 0.542,
+        "7": 0.076,
+        "8": 0.118,
+        "9": 0.132
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.069,
+        "2": 0.153,
+        "3": 0.0,
+        "4": 1.91,
+        "5": 3.285,
+        "6": 2.16,
+        "7": 0.285,
+        "8": 0.312,
+        "9": 0.444
+      }
+    }
+  ]
+}

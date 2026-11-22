@@ -1,0 +1,194 @@
+{
+  "schema": "setup_summary_v1",
+  "settings": {
+    "k": 6,
+    "min_box_coverage": 0.5,
+    "min_visible_players": 5,
+    "min_corners_confident": 100,
+    "min_cluster_size": 10,
+    "stability_threshold": 0.6,
+    "seed": 0
+  },
+  "corners_total": 1083,
+  "corners_usable": 591,
+  "corners_excluded": 492,
+  "excluded_by_reason": {
+    "no_360_file": 0,
+    "no_360_frame": 491,
+    "invalid_frame": 0,
+    "no_corner_location": 0,
+    "invalid_corner_location": 0,
+    "low_visibility": 1,
+    "too_few_visible_players": 0
+  },
+  "usable_fraction": 0.5457,
+  "clusters_requested": 6,
+  "clusters_found": 6,
+  "stability_ari": 0.7074,
+  "exploratory": false,
+  "caveats": [],
+  "clusters": [
+    {
+      "cluster_id": 0,
+      "size": 167,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.114,
+        "2": 0.186,
+        "3": 0.012,
+        "4": 1.18,
+        "5": 3.228,
+        "6": 0.479,
+        "7": 0.036,
+        "8": 0.06,
+        "9": 0.108
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.042,
+        "2": 0.144,
+        "3": 0.018,
+        "4": 0.766,
+        "5": 5.024,
+        "6": 1.934,
+        "7": 0.293,
+        "8": 0.299,
+        "9": 0.515
+      }
+    },
+    {
+      "cluster_id": 1,
+      "size": 163,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.08,
+        "2": 0.178,
+        "3": 0.055,
+        "4": 0.301,
+        "5": 3.675,
+        "6": 1.209,
+        "7": 0.043,
+        "8": 0.061,
+        "9": 0.141
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.018,
+        "2": 0.043,
+        "3": 0.061,
+        "4": 0.62,
+        "5": 3.202,
+        "6": 4.35,
+        "7": 0.27,
+        "8": 0.288,
+        "9": 0.479
+      }
+    },
+    {
+      "cluster_id": 2,
+      "size": 79,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.076,
+        "2": 0.203,
+        "3": 0.076,
+        "4": 0.367,
+        "5": 1.405,
+        "6": 3.165,
+        "7": 0.063,
+        "8": 0.076,
+        "9": 0.266
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.025,
+        "2": 0.063,
+        "3": 0.038,
+        "4": 0.671,
+        "5": 1.392,
+        "6": 6.076,
+        "7": 0.367,
+        "8": 0.278,
+        "9": 0.62
+      }
+    },
+    {
+      "cluster_id": 3,
+      "size": 79,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.127,
+        "2": 0.101,
+        "3": 0.013,
+        "4": 2.114,
+        "5": 1.354,
+        "6": 1.443,
+        "7": 0.038,
+        "8": 0.101,
+        "9": 0.152
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.038,
+        "2": 0.089,
+        "3": 0.0,
+        "4": 0.975,
+        "5": 3.291,
+        "6": 3.62,
+        "7": 0.253,
+        "8": 0.291,
+        "9": 0.405
+      }
+    },
+    {
+      "cluster_id": 4,
+      "size": 55,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.182,
+        "2": 0.291,
+        "3": 0.018,
+        "4": 0.727,
+        "5": 2.273,
+        "6": 0.909,
+        "7": 0.073,
+        "8": 0.109,
+        "9": 0.327
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.073,
+        "2": 0.218,
+        "3": 0.091,
+        "4": 1.291,
+        "5": 2.309,
+        "6": 2.891,
+        "7": 0.382,
+        "8": 0.364,
+        "9": 0.945
+      }
+    },
+    {
+      "cluster_id": 5,
+      "size": 48,
+      "meets_min_size": true,
+      "mean_attackers_by_zone": {
+        "1": 0.229,
+        "2": 0.042,
+        "3": 0.0,
+        "4": 2.729,
+        "5": 1.667,
+        "6": 0.271,
+        "7": 0.083,
+        "8": 0.167,
+        "9": 0.042
+      },
+      "mean_defenders_by_zone": {
+        "1": 0.083,
+        "2": 0.042,
+        "3": 0.0,
+        "4": 3.146,
+        "5": 2.625,
+        "6": 1.708,
+        "7": 0.271,
+        "8": 0.271,
+        "9": 0.271
+      }
+    }
+  ]
+}
