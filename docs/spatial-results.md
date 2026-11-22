@@ -21,8 +21,7 @@ were usable; one matched frame was excluded for low visibility (box coverage 0.2
 The pooled fit gave four clusters of 228, 163, 115 and 85 corners, with stability ARI = 0.864.
 The 591 usable corners were split into 56 team profiles (32 World Cup, 24 Euro). No team has
 more than 24 usable corners, so every team profile is a small sample.
-Per `docs/tournament-360-delivery-coverage.md`, short corners are matched far less often
-(World Cup 29.2%, Euro 32.3%) than other deliveries (55.9% and 60.0%), so the clusters
+Per `docs/tournament-360-delivery-coverage.md` (reproduced in `outputs/utkarsh-360-coverage/by_delivery.csv`), short corners are matched far less often (World Cup 29.2%, Euro 32.3%) than other deliveries (55.9% and 60.0%), so the clusters
 under-represent short-corner setups. Whether frames are missing at random is unknown.
 
 ![Figure 1](spatial-results/figure1_cluster_zone_means.png)
@@ -65,8 +64,9 @@ A full comparison of all 1,083 rows and 35 columns (37,905 cells,
 `docs/spatial-results/hash-comparison.txt`) shows identical keys, row order, columns and values
 except `short_limit`, which is written as `15.0` in my file and `15` in the reference file,
 in every row. This accounts for the whole 2,166-byte size difference. Line endings are
-identical (CRLF) in both. The cause of the formatting difference (code version) is not yet
-established.
+identical (CRLF) in both. Diego independently reproduced this file's SHA-256 by changing only `short_limit` from 15 to
+15.0, so the hash difference is fully explained by this formatting. Which code version writes
+each form has not been established.
 
 ## Limitations
 Clusters describe static snapshots at delivery, not player runs or marking. They were fitted
@@ -76,22 +76,26 @@ short corners are under-covered, the visible area limits what is observed, and t
 at most 24 usable corners.
 
 ## Reproduction
-Python 3.13.0, repository commit f8b66b0616664a3c90b28d12197e95b7e2cba724, data revision
-4b73468fc5b0f1950f9f66fada70ad3a4f9327cb.
+Python 3.13.0, repository commit `61d68aa8e1522f7a532110bbe9137d978861967e` (code used for all runs; this document added afterwards), data revision `4b73468fc5b0f1950f9f66fada70ad3a4f9327cb`.
 
 ```powershell
 python -m src.data --config configs/data/wc2022-euro2024.json --parquet
 python src/run_corner_batch.py --manifest data/ingested/wc2022-euro2024/batch_manifest.json --output outputs/utkarsh-corners --window 15 --short-limit 15 --parquet
 python -m src.profile_tournament_360 --corners outputs/utkarsh-corners/corner_summary.csv --coverage-manifest data/ingested/wc2022-euro2024/coverage_manifest.json --frames-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-360-coverage
 python -m src.profile_tournament_setups --corners outputs/utkarsh-corners/corner_summary.csv --coverage-manifest data/ingested/wc2022-euro2024/coverage_manifest.json --frames-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --coverage-profile outputs/utkarsh-360-coverage/provenance.json --output outputs/utkarsh-shared-clusters
+# Sensitivity (each with a new output folder; F = frames dir above, C = corner table above)
+python -m src.setups --corners <C> --three-sixty-dir <F> --output outputs/utkarsh-setups-k4 --k 4
+python -m src.setups --corners <C> --three-sixty-dir <F> --output outputs/utkarsh-setups-k4-cov30 --k 4 --min-box-coverage 0.3
+python -m src.setups --corners <C> --three-sixty-dir <F> --output outputs/utkarsh-setups-k4-cov70 --k 4 --min-box-coverage 0.7
+python -m src.setups --corners <C> --three-sixty-dir <F> --output outputs/utkarsh-setups-k3 --k 3
+python -m src.setups --corners <C> --three-sixty-dir <F> --output outputs/utkarsh-setups-k5 --k 5
+python -m src.setups --corners <C> --three-sixty-dir <F> --output outputs/utkarsh-setups-k6 --k 6
+# Table and figures (needs matplotlib)
+python -m pip install -r src/setups/requirements-figures.txt
+python -m src.setups.spatial_artifacts --out docs/spatial-results --primary outputs/utkarsh-setups-k4 --teams outputs/utkarsh-shared-clusters --run "Primary_k4_cov0.5=outputs/utkarsh-setups-k4" --run "k4_cov0.3=outputs/utkarsh-setups-k4-cov30" --run "k4_cov0.7=outputs/utkarsh-setups-k4-cov70" --run "k3_cov0.5=outputs/utkarsh-setups-k3" --run "k5_cov0.5=outputs/utkarsh-setups-k5" --run "k6_cov0.5=outputs/utkarsh-setups-k6"
+```
 
-# Sensitivity (each with a new output folder)
-python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k4 --k 4
-python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k4-cov30 --k 4 --min-box-coverage 0.3
-python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k4-cov70 --k 4 --min-box-coverage 0.7
-python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k3 --k 3
-python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k5 --k 5
-python -m src.setups --corners outputs/utkarsh-corners/corner_summary.csv --three-sixty-dir data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty --output outputs/utkarsh-setups-k6 --k 6
-
-# Table and figures
-python spatial_artifacts.py --out docs/spatial-results --primary outputs/utkarsh-setups-k4 --teams outputs/utkarsh-shared-clusters --run "Primary_k4_cov0.5=outputs/utkarsh-setups-k4" --run "k4_cov0.3=outputs/utkarsh-setups-k4-cov30" --run "k4_cov0.7=outputs/utkarsh-setups-k4-cov70" --run "k3_cov0.5=outputs/utkarsh-setups-k3" --run "k5_cov0.5=outputs/utkarsh-setups-k5" --run "k6_cov0.5=outputs/utkarsh-setups-k6"
+Replace `<C>` with `outputs/utkarsh-corners/corner_summary.csv` and `<F>` with
+`data/raw/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb/data/three-sixty`.
+The helper is `src/setups/spatial_artifacts.py`; its only dependency is matplotlib 3.11.2
+(`src/setups/requirements-figures.txt`).
