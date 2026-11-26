@@ -1,5 +1,7 @@
 # Corner scouting from event histories and partial spatial snapshots
 
+**Draft status (25 November 2026):** This branch finalizes the audit section and its evidence links. Other sections are carried forward from the older paper draft and are not certified against the latest systems/spatial results. They require owner review before submission.
+
 Working paper draft, assembled 19 November 2026. This is an evidence-backed draft, not a submission-ready manuscript. Evidence identifiers below resolve in [paper-evidence-index.md](paper-evidence-index.md). No extraction, fitting, bootstrap experiment or clustering was rerun to assemble this text. Verification here means rereading saved artifacts, checking recorded hashes, recomputing tabular totals and inspecting implementation; it does not mean independent replication of the experiments.
 
 ## Research questions and scope
@@ -20,7 +22,7 @@ The source is the pinned [StatsBomb open-data repository](https://github.com/hud
 | UEFA Euro | 2024 | 51 | 512 |
 | Total | Separate competition-seasons | 1,632 | 16,565 |
 
-The league subset contains 1,517 matches and 15,482 corners; the tournaments contain 115 matches and 1,083 corners. Ligue 1 has 377 source-listed matches and is not represented as a complete 380-match season. Neither primary table has duplicate `(match_id, corner_event_id)` keys or missing required identifiers and competition/season/date metadata. These statements were checked against the constituent CSVs and manifests, not the currently inaccessible combined audit directory. This corpus is not claimed to satisfy a “tens of thousands” target [D1, M1].
+The league subset contains 1,517 matches and 15,482 corners; the tournaments contain 115 matches and 1,083 corners. Ligue 1 has 377 source-listed matches and is not represented as a complete 380-match season. Neither primary table has duplicate `(match_id, corner_event_id)` keys or missing required identifiers and competition/season/date metadata. These statements were checked against the constituent CSVs and manifests, rather than the combined audit directory; the latter's recorded hashes were subsequently verified during audit finalization. This corpus is not claimed to satisfy a “tens of thousands” target [D1, M1].
 
 ## Ingestion and extraction
 
@@ -34,7 +36,9 @@ Each row retains delivery attributes and coordinates, attacking shot/goal counts
 
 ### Validation status
 
-Automated boundary tests, schema checks and provenance records support implementation consistency. Diego's 100-corner review passed completeness checks. Asaad's completion, agreement and adjudication remain pending. Neither reviewer's judgments were inspected while drafting this paper. The frozen sample is enriched for rare and boundary cases, so its eventual unweighted error frequency must not be presented as an unbiased corpus accuracy estimate. Automated checks are not human judgments or ground truth [A1].
+The completed Diego-Asaad source-consistency audit covers 100 corners and 400 paired judgments. Both reviews are complete and match the hash-verified frozen master. Pre-discussion agreement is 100% for delivery, shot count, goal count and stop reason; Cohen's kappa is undefined because both reviewers marked every field y. Six note-flagged termination cases have separately recorded rule-consistent resolutions confirmed by both reviewers on November 25, 2026. No extractor errors were identified under the audited rules. This enriched sample is not independent football ground truth or an unbiased corpus-wide accuracy estimate. Automated verification remains separate from the human audit [A1].
+
+Source traceability for audit #1 was separately investigated. The restored local event JSON matches the original recorded sidecar and extraction hash; the altered backup is preserved. Its only structural difference is the corner identifier at provider index 2048. This verifies local recorded-byte identity, not a fresh upstream download or proof of historical reviewer access. Available run receipts identify the original source hash; no affected computational run is identified, while path-only or unlogged historical reads remain unverifiable. Combined preparation records are now readable and match the frozen sample's recorded input hashes [A1].
 
 ## Prediction methods
 
@@ -122,12 +126,12 @@ The dossier supplies distributions, observed-frequency intervals, separately lab
 
 ## Reproducibility and unfinished validation
 
-The project includes pinned inputs, settings, typed schemas, event identifiers, content receipts and an independent DuckDB implementation of the extraction rules. The systems owner reports successful two-match SQL/Python sample comparisons. Their cited output directories are absent in this checkout, so those numerical sample results are not adopted as independently verified paper results. Full-corpus SQL parity, clean-checkout final-corpus reproduction, controlled repeated performance benchmarks, and dossier evaluation remain pending [R1].
+The project includes pinned inputs, settings, typed schemas, event identifiers, content receipts and an independent DuckDB implementation of the extraction rules. The initial paper draft predates the systems corpus handoff now present on current main in [systems-results.md](https://github.com/ImpalaOcean/corner-scouting/blob/bdcba9a0eaea63196848d6d2458876643f8b4d46/docs/systems-results.md). That handoff documents full-corpus comparisons, a separate clean-checkout reproduction and repeated benchmarks; those experiments were not rerun in this audit-finalization task. Integrating their checked numerical results into the paper remains an owner-review task, distinct from the still-pending dossier usefulness/predictive evaluation [R1].
 
-Spatial handoff of complete checked methods/results text and sensitivity evidence remains pending despite the available primary spatial artifacts [X3].
+Current main also includes spatial paper material added after the original draft. Owner reconciliation of that text and its sensitivity evidence with this paper remains pending; the audit update does not certify new spatial measurements [X3].
 
 ## Limitations and next evidence needed
 
 The selected seasons do not establish generalization to modern leagues or new providers. Possession labels, missing technique information, provider revisions and explicit out flags constrain extraction. Unknown-category scoring exclusions may be selective. Date/identifier ordering keeps matches intact but does not guarantee that every same-date fixture within an evaluation season lies in the same split; the dossier's stricter whole-date cutoff is a separate protection. Match bootstrap intervals do not account fully for team dependence, model refitting or selection uncertainty. Observational outcome attribution and static setup clusters do not establish causal effects, marking schemes or tactical success.
 
-The formal proposal/course requirements, external literature review and complete bibliographic references still need supplying. No external literature claims are invented here. Pending human agreement/adjudication, short-threshold sensitivity, spatial sensitivity receipts, SQL corpus checks, clean-checkout reproduction, fair benchmarks, reader evaluation and cutoff-safe spatial handoff must be completed or explicitly scoped out before submission. Existing figures are not embedded until their provenance is tied to the checked tables [M1, A1, S1, X3, R1, F1].
+The formal proposal/course requirements, external literature review and complete bibliographic references still need supplying. No external literature claims are invented here. Human agreement and the six recorded resolutions are complete. Remaining validation, including short-threshold sensitivity, reader evaluation and cutoff-safe spatial handoff, must be completed or scoped out before submission. Systems/spatial completion statuses elsewhere in this November 19 draft require owner refresh against current-main evidence; this audit update does not rerun or recertify them. Existing figures are not embedded until their provenance is tied to the checked tables [M1, A1, S1, X3, R1, F1].
