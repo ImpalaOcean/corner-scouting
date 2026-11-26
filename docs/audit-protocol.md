@@ -44,7 +44,8 @@ short, unknown and straight deliveries, goals, shots that end on the time
 limit, and each stop reason), then the rest at random. Its error rate is not
 an unbiased estimate of corpus wide extraction accuracy; the paper must say so.
 
-Reference run (2026-11-18, code commit on this branch): 16,565 corners in the
+Reference run (preparation recorded 2026-11-12 in `sample_provenance.json`;
+code commit on this branch): 16,565 corners in the
 population, 100 sampled (7 tournament, 93 league; World Cup 3, Euro 4, La Liga
 24, Ligue 1 22, Premier League 23, Serie A 24). `src/verify_audit.py` verified
 the sheet's provenance and agreed with all 100 corners on every field.
@@ -87,6 +88,25 @@ physically stopped:
 3. Goals and ball out flags are checked after an event is included.
 4. An event exactly on the cap is still included.
 
+> **Post-audit clarifications (added 2026-11-25).** The two paragraphs below
+> were added after both reviewers finished and after pre-resolution agreement
+> was computed. They restate rules already in
+> `docs/corner-extraction-methods.md` and the implemented behaviour; they do
+> not change any rule, any reviewer judgment or the agreement results.
+>
+> What counts as a stoppage follows the methods document: a non-advantage foul,
+> offside, an injury stoppage, a referee ball drop, or a half end event. A Half
+> End is a stoppage, provided no earlier-priority boundary (period, time over
+> the cap, restart or possession change) has already ended the sequence. A Half
+> End still carries the period of the half it closes, so the period check does
+> not fire on it; audit 57 is an example, where the chain ends before Half End
+> with reason `stoppage`, not `period_end`. Do not substitute a strict reading
+> that includes Half End and stops at the next period.
+>
+> Ball out is judged from the top level `out` flag only. A nested
+> `pass.outcome` of `Out` without that flag is not a ball out signal under the
+> current rule; record it in the notes as an edge case.
+
 ### Missing ball out events
 
 StatsBomb often records no event when an off target shot goes out. If no
@@ -118,3 +138,12 @@ the original answers. Report in the paper: agreement before resolution, kappa,
 missing answers, confirmed extractor errors per column and what was fixed. Any
 confirmed extraction fix needs reviewed code, regression tests and regenerated
 affected outputs with recorded provenance.
+
+## Completed independent audit (2026-11-25)
+
+See [audit-report.md](audit-report.md) for the supplied final report and
+[audit-finalization-verification.md](audit-finalization-verification.md) for
+independent receipt checks, source recovery scope and output-impact investigation.
+The original reviews, frozen master, preparation worksheet and pre-discussion
+agreement remain unchanged. The resolved worksheet is a separate local artifact;
+its exact path and hash are recorded in the verification note.
