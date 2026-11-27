@@ -1,0 +1,78 @@
+\documentclass[sigconf]{acmart}
+\setcopyright{none}
+\settopmatter{printacmref=false,printccs=false,printfolios=true}
+\acmDOI{}\acmISBN{}
+\title{Corner scouting from event histories and partial spatial snapshots}
+% Unresolved: confirm all five author names, order, affiliations and course metadata.
+\author{Project team (author details pending confirmation)}
+\affiliation{\institution{Affiliation pending confirmation}\country{Canada}}
+\newcommand{\pending}[1]{\par\noindent\textbf{Unresolved:} #1\par}
+\begin{document}
+\begin{abstract}
+This working skeleton presents an event-based corner scouting pipeline, temporal
+league prediction, retrospective spatial profiles and a cutoff-safe dossier example.
+Saved evidence is distinguished from supplied execution reports. Additional dossiers,
+reader evaluation and explicit scope decisions remain unfinished. This is not a final submission.
+\end{abstract}
+\maketitle
+\section{Questions and corpus}
+We investigate team-history delivery and shot prediction, static setup coverage and
+historical scouting reports using pinned StatsBomb events~\cite{statsbomb} within P6-a~\cite{program2026}.
+The corpus comprises 16,565 corners in 1,632 matches; Ligue 1 includes 377 listed matches.
+This does not establish the proposed tens-of-thousands scale.
+\section{Methods and audit}
+Corners start at passes or direct shots typed Corner. The primary sequence uses a
+15-second cap and documented possession, restart, period and stoppage boundaries.
+Ground deliveries spanning at most 15 native units are short; unknowns remain descriptive.
+The enriched source-consistency audit covered 100 corners and 400 paired judgments:
+all agreed, Cohen's kappa is undefined (constant yes), and six resolutions were jointly confirmed.
+This is not independent football ground truth or corpus-wide accuracy.
+\pending{Transfer the full methods and source-recovery qualifications from the Markdown draft.}
+\section{Prediction and robustness}
+Chronological competition-season splits are 60/20/20, with eligibility fixed at
+10 training matches and 30 training corners. Validation selects smoothing; test data
+do not select methods. Match-bootstrap intervals use 1,000 draws and seed 5118.
+The original experiment uses code 6a64fbdde56131077c66d245b2cb59cad60135a0.
+Shrinkage improves delivery prediction in this corpus; the primary shot result
+does not clearly improve on pooling. The unsmoothed delivery baseline floors
+probabilities at $10^{-6}$ and renormalizes, so its contrast is floor-dependent.
+Alternative windows are robustness analyses on reused matches, not replications.
+\subsection{Short-corner distance robustness}
+At fixed 15-second outcomes, short limits 10 and 20 native units were compared
+with primary 15 using the same corpus and chronological splits. Validation-only
+refitting selected alpha=50 and beta=200 throughout; all 80 league teams remained
+eligible and tournament prediction stayed unavailable. Table~\ref{tab:short-threshold}
+shows a shrinkage advantage over pooling within each definition. The known-label
+test counts are 2,789, 2,916 and 2,996, so raw losses across definitions cannot
+select a preferred threshold. All observed label changes are short/unknown;
+shot outcomes, Brier scores and paired intervals are unchanged. The primary
+remains 15 units. These are reused-corpus robustness checks, not replications;
+retain the floor-probability and conditional-interval caveats. Saved evidence and
+code SHA are mapped in S2 of the Markdown evidence index. No experiment was rerun
+to integrate this section, and retrospective clustering was not repeated.
+\section{Retrospective spatial profiles}
+Of 1,083 tournament corners, 592 have matching frames and 591 are usable.
+Pooled k=4 clusters contain 228, 163, 115 and 85 corners; saved stability is ARI 0.864.
+These full-tournament fits are retrospective and cannot enter a prematch view.
+Short corners are under-covered; similar rates cannot prove missingness random.
+\pending{Integrate visibility/k robustness and disclose departures from proposal 80/90 percent visibility and train-only selection.}
+\section{Systems evidence}
+Supplied Python/SQL comparisons agree over four windows, with $10^{-12}$ xG tolerance.
+Five measured repetitions after warmup found SQL slower in the shipped workflow.
+The desktop/cache/background limits and supplied clean-checkout evidence are described
+in the Markdown draft and evidence index; experiments were not rerun for this paper.
+\section{Cutoff-safe dossier}
+The existing Aston Villa--Arsenal example excludes all matches on or after
+December 13, 2015 before eligibility, selection and fitting. Alpha and beta reach
+the predefined grid maximum; historical intervals are not model uncertainty.
+Only two distinct teams are evidenced. No reader usefulness is yet demonstrated.
+\section{Limitations and unfinished work}
+Separate model validation from report usefulness~\cite{davis2024}.
+Provider labels, partial spatial coverage, historical source-access uncertainty,
+conditional bootstrap uncertainty and observational attribution limit interpretation.
+\pending{Complete five supported team views, independent reader evaluation, related work,
+figure mappings, authorship, accepted scope deviations and final minimum-seven-page format.}
+\input{tables}
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+\end{document}
