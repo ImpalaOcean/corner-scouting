@@ -1,0 +1,16 @@
+\begin{table*}[tbp]
+\caption{Short-distance robustness at fixed 15-second outcomes. All runs share 3,154 test corners, but known-label scoring populations differ. Alpha=50, beta=200. Paired intervals use 1,000 match-bootstrap draws, seed 5118. Raw losses across changed labels cannot select a preferred threshold. Source: S2.}
+\label{tab:short-threshold}
+\centering
+\normalsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule
+Limit & Known / unknown & Pooled & Unsmoothed & Shrunk & Difference [95\% interval] \\
+\midrule
+10 & 2789 / 365 & 1.070850 & 1.063376 & 1.039788 & -0.031062 [-0.0437, -0.0186] \\
+15 & 2916 / 238 & 1.129434 & 1.118664 & 1.096030 & -0.033404 [-0.0466, -0.0201] \\
+20 & 2996 / 158 & 1.157696 & 1.146641 & 1.124358 & -0.033339 [-0.0462, -0.0201] \\
+\bottomrule
+\end{tabular}
+\end{table*}

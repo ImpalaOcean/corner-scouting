@@ -1,0 +1,10 @@
+# Reconciled v4 ACM manuscript
+
+Reconciled November 28, 2026: the supplied balance package/command, ragged-bottom layout, pending-city placeholder, source-hash wrapping and verified article lengths (Pappalardo15 pages; TacticAI13) are now integrated locally. Publisher PDF footers verify the page counts; article numbers236/1906 are retained. The build succeeds at eight pages with no overfull boxes or unresolved citations/references. All pages were visually checked. Pages1?5 and8 differ from the previous PDF; pages6?7 are pixel-identical. No pixel-identical or bitwise correspondence with the older PDF is claimed. All seven table files and the figure PNG remain byte-identical. Authors, additional dossiers, reader evaluation, scope decisions and section review remain pending.
+
+The current source archive is `corner-scouting-overleaf-source-v4-reconciled-2026-11-28.zip`, with flat root main.tex, all figure/table assets, bibliography, guides and a fresh SOURCE-MANIFEST.json recording actual bytes. It is separate from the original af7f... archive, the supplied fixed 0b129a... archive and the fc89... preservation ZIP; none was overwritten. The new source ZIP and checked PDF/build records are in local `paper-source-reconciliation-2026-11-28/`. See [OVERLEAF.md](OVERLEAF.md) and [evidence index](../docs/paper-evidence-index.md), F5.
+
+- [paper-preservation](https://drive.google.com/file/d/1PYaAn79yNf4-J40n5VT7QMpPvbeZJBgh/view): 2566585 bytes; SHA-256 `fc89b40867d19d8204f33df6f476d7da084ef895a53b58046dfacc77fab6ae8a`, hosted bytes verified November 28, 2026.
+- [systems](https://drive.google.com/file/d/1B_kP1JBe8uObxfx9hFDxKJm5xIYJpKhl/view): 44880751 bytes; SHA-256 `55b0990f0fe0866edb9123ef2e35074325814b69797667af48b85c6908d0d4a8`, hosted bytes verified November 28, 2026.
+
+Both hosted archives were streamed and hashed without executing contents, saving duplicate downloads, uploading or changing sharing. Private audit inventories and original reviewer sheets are excluded from the source package. These are manuscript/build and artifact-identity checks, not experimental replication.
