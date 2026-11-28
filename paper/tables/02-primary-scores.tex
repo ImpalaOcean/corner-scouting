@@ -1,0 +1,22 @@
+\begin{table}[tbp]
+\caption{Primary held-out scores: delivery log loss over 2,916 known labels; shot Brier score over all 3,154 corners, from 304 matches and 80 teams. Lower is better. Intervals are conditional 95\% match-bootstrap intervals (1,000 draws, seed 5118). Alpha=50, beta=200. Source: P2.}
+\label{tab:primary-scores}
+\centering
+\normalsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lrl@{}}
+\toprule
+Method & Score & 95\% interval \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Delivery log loss}} \\
+Pooled & 1.129434 & [1.1028, 1.1574] \\
+Unsmoothed & 1.118664 & [1.0829, 1.1611] \\
+Shrunk & 1.096030 & [1.0666, 1.1276] \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Shot Brier score}} \\
+Pooled & 0.220439 & [0.2141, 0.2268] \\
+Unsmoothed & 0.221370 & [0.2148, 0.2278] \\
+Shrunk & 0.220268 & [0.2138, 0.2269] \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -23,7 +23,7 @@ Sources: original local `C:/Users/diego/Downloads/p6a_proposal.tex`, SHA-256 `36
 | Processing and dossier-generation timing | R1 five measured reps after warmup; desktop details | No isolated/cold-cache/real-time claim; usefulness not measured by time | Mo with Mohamed | Supplied completed measurements, bounded interpretation |
 | Two-person 100-sequence audit | A1 merged report and verification; 400 paired judgments, undefined kappa, six confirmed resolutions | Enriched source-consistency only; historical unlogged reads remain unverifiable | Diego/Asaad | Completed with documented limitations |
 | Public code, README, configs, rights/attribution | Current main/code/docs; pinned provider source | Final clean-user instructions, license/attribution and release review; no raw redistribution by default | Ebtesam/Mo; Diego coordinates | Documentation/release review pending |
-| ACM sigconf final paper >=7 pages | Refreshed draft/index; new `paper/main.tex` skeleton and verified references | Build/page count, final related work, authors/affiliations and all-owner sign-off | Mohamed and all five owners | Writing/format validation pending |
+| ACM sigconf final paper >=7 pages | V4 local compilation and all-page visual check: eight pages; clean source-ZIP build reproduces all rendered pages. Diego confirms a successful eight-page Prism build with all pages matching the local PDF. Six checked references | Local build is verified; Prism identity is Diego-confirmed, not independently rechecked here. Authors/affiliations, owner section review, final submission approval and remaining content below stay pending | Mohamed and all five owners | Compilation/layout baseline complete; content and sign-off pending |
 
 Decisions must be recorded before claiming completion, rather than silently rewriting the proposal. No new experiment is authorized by this checklist. Full movement/routine optimization and marking classification are outside P6-a; they are not hidden remaining deliverables.
 
@@ -35,3 +35,14 @@ Decisions must be recorded before claiming completion, rather than silently rewr
 - Mohamed: Are there unshared adequately supported dossier teams? Confirm whether five team views or five separately rendered dossiers are required, and review the selection extension, target-zone-map gap and blank reader form.
 - Mohammed Hassan (Mo): Confirm benchmark scope/hardware, hosted evidence access, input-hash reconciliation and that the clean-reproduction claims are supplied execution evidence, not a rerun by this paper assembler.
 - Diego: Confirm the recovered proposal matches the submitted version, obtain agreement on deviations, and coordinate final authorship, references, compile/page-count review and owner sign-off.
+
+
+## V4 compilation baseline and publication checkpoint — November 27, 2026
+
+Keep v4 as the current compilation baseline. The local eight-page PDF and all 16 packaged source files still match their recorded hashes and were preserved before publication. The existing clean source-ZIP build record verifies identical text and rendered pixels on all eight pages; it was not rerun here. The final local log has no overfull boxes or unresolved citations/references; its nonfatal metadata, article-page-field and balancing diagnostics remain recorded. Diego reports that Prism also compiled eight pages and that all eight render identically to the local build. That Prism comparison is user-confirmed; no separate Prism PDF, compiler log or checksum was supplied for this publication check.
+
+- Preserved local PDF SHA-256: `d3c633de2c671bc56c59ddc522ab1360c87f2e35e82c3d9e56ae262b53ecc033`.
+- Historical v4 source ZIP SHA-256: `af7f596ab27d376717b2e164f35f10ffec7559b33c3bd5ab26d332d4ef5d50ea`. The archive is no longer present at its recorded local path, so that ZIP could not be rehashed during publication. Its receipt and the matching source files are preserved; no replacement archive was invented.
+- Commands, local versions and artifact locations: [build guide](../paper/OVERLEAF.md); [evidence index](paper-evidence-index.md), F3/F4. Existing compilation records stay outside Git.
+
+The page/layout milestone does not complete the paper. Confirmed authors, cutoff-safe examples covering at least five distinct teams (only two currently evidenced), reader evaluation, decisions on documented proposal deviations and teammates' final section reviews remain pending. Keep PR #29 a draft. No further layout-only version is needed for this checkpoint; no experiment was rerun.

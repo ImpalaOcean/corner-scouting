@@ -1,11 +1,11 @@
-# ACM sigconf working skeleton
+# ACM sigconf working manuscript, v4
 
-No tracked LaTeX manuscript or bibliography existed on main or draft PR #29 at inspection. `main.tex` is a working skeleton using `acmart` sigconf, `references.bib` contains only records checked against the pinned source/publisher/course brief, and `tables.tex` preserves the six earlier Markdown tables and adds Table 7 for the verified short-threshold sensitivity. The short-threshold section maps to S2 in the evidence index; its saved results were not rerun for paper integration. The Markdown manuscript/evidence index remain the fuller source of qualifications. This is not a compiled, submission-ready or minimum-seven-page paper.
+`main.tex` is the evidence-backed draft for existing draft PR #29. Current sources include the completed extraction, audit, prediction, robustness, spatial, systems and past-only dossier material; unsupported deliverables remain explicit. Numerical results were not rerun or tuned during paper preparation.
 
-From `paper/`, with a local TeX distribution providing acmart/ACM bibliography style:
+V4 removes section-level float barriers that stranded text in v3 and replaces its forced new reference page with one final barrier. Tables use the normal class text size without scaling; compact primary tables group the two targets. The spatial bitmap is byte-preserved and still displayed in two readable views. Hash strings may wrap; margins, fonts and line spacing retain the ACM sigconf defaults. Related work now cites verified primary event-data, TacticAI, probability-scoring and sports-evaluation publications. It makes no claim to reproduce their methods, data or performance.
 
-```powershell
-latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=../outputs/paper-build main.tex
-```
+See [OVERLEAF.md](OVERLEAF.md) for exact upload/build steps and compiler qualifications. The v4 source ZIP and compiled PDF, source preservation, logs and verification record are outside this Git worktree in the local `paper-v4-preparation-2026-11-27/` folder. They exclude raw data, analytical outputs and reviewer sheets. The local PDF has eight pages, visually reviewed throughout, with no overfull boxes or unresolved citations/references in its final log. Nonfatal placeholder-affiliation, bibliography-page-field and balancing diagnostics remain recorded. Repository documentation links are not manuscript build dependencies.
 
-The output path keeps PDF/auxiliary files separate; use a fresh build directory. No TeX engine or latexmk was found on PATH in this task, so compilation/layout/page count remain unverified. Do not assume the wide draft tables fit; review the rendered PDF and resize/restructure as needed. Full prose, captions, related work, figures, author metadata and final bibliography still need integration. No guessed author identities, venue, performance results or TacticAI bibliography were added. Reconcile changes with `docs/paper-draft.md` and retain its evidence qualifiers.
+Seven stable table labels retain all original values; display numbering follows discussion order: corpus1, primary scores2, paired differences3, windows4, short-distance5, spatial coverage6, dossier7. Markdown keeps its historical table numbers. Two figure labels are unchanged. `references.bib` contains six checked records; this is not a comprehensive literature review or owner sign-off.
+
+[UNRESOLVED.md](UNRESOLVED.md) lists missing evidence. Authors/affiliations, additional team dossiers, reader evaluation and agreed scope deviations remain pending. The document is not submission-ready merely because it compiles or reaches a page minimum. No experiments, commits, pushes or merges were performed for v4.

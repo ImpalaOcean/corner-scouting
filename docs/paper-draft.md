@@ -24,6 +24,16 @@ The source is the pinned [StatsBomb open-data repository](https://github.com/hud
 
 The league subset contains 1,517 matches and 15,482 corners; the tournaments contain 115 matches and 1,083 corners. Ligue 1 has 377 source-listed matches and is not represented as a complete 380-match season. Neither primary table has duplicate `(match_id, corner_event_id)` keys or missing required identifiers and competition/season/date metadata. These statements were checked against the constituent CSVs and manifests, rather than the combined audit directory; the latter's recorded hashes were subsequently verified during audit finalization. This corpus is not claimed to satisfy a “tens of thousands” target [D1, M1].
 
+## Related work
+
+Pappalardo et al.'s [open soccer event dataset](https://www.nature.com/articles/s41597-019-0247-7) describes action times, positions, outcomes and player attributes, and distinguishes event logs from tracking data. That distinction matters for our scope: action histories do not reconstruct all players' movement. We use StatsBomb, not their dataset, and do not assume interchangeable provider definitions. Source pinning and traceable event IDs make our own sequence definitions inspectable [L1].
+
+[TacticAI](https://www.nature.com/articles/s41467-024-45965-x) uses tracking-derived player graphs for receiver and shot prediction, retrieval and positional recommendations, with expert assessment. Our partial-snapshot zone clusters are descriptive and do not reproduce that system; our history-based frequency forecasts also have different inputs and targets. No cross-study performance comparison is justified by these task and data differences [L1].
+
+[Gneiting and Raftery](https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf) develop proper scoring rules, including logarithmic and quadratic scores. We score full delivery distributions and shot probabilities, while keeping validation-only smoothing selection separate from test scoring. Scoring-rule theory does not validate our labels. The raw baseline's probability floor and changed-label populations under threshold sensitivity still constrain interpretation [L1, P1, S2].
+
+[Davis et al.](https://link.springer.com/article/10.1007/s10994-024-06585-0) distinguish model accuracy from indicator usefulness and discuss dependence in evaluation. We accordingly separate chronological prediction, retrospective spatial description and the past-only dossier demonstration. Match bootstrap intervals condition on fitted models, and prediction gains do not establish reader usefulness. Additional team examples and reader evaluation remain pending [L1, C1].
+
 ## Ingestion and extraction
 
 The ingestion pipeline caches original provider JSON, records file status and SHA-256 receipts, validates events and metadata, and exports tables plus a batch manifest for extraction. Exact duplicate events are removed in the cleaned ingestion representation; conflicting duplicate identifiers reject a match. Raw JSON remains unchanged. Optional spatial-file failures are recorded separately from valid event ingestion. Missing optional fields remain missing rather than being replaced by inferred values. Valid matches with no corners remain in the manifest [M2].
@@ -123,6 +133,8 @@ All tournament match files loaded in the recorded coverage run; the exclusions a
 
 Matching coverage is lower for short than non-short corners: 19/65 (29.23%) versus 283/506 (55.93%) in the World Cup, and 20/62 (32.26%) versus 270/450 (60.00%) at Euro. These are descriptive, match-clustered observations. They neither identify why frames are missing nor prove random availability. Team profiles are exploratory because of small local samples even when pooled clustering passes its native confidence thresholds [X2].
 
+The existing zone-mean figure is now included in the LaTeX paper as two enlarged, source-checked panels (F2), retaining all four clusters. Its means are static observations, not marking-scheme or tactical-success labels. See [figure sources](../paper/figure-sources.md).
+
 These full-tournament centers and shares are strictly retrospective. A prematch view requires a separate pooled fit on strictly pre-cutoff data; filtering team rows after fitting future frames would leak information. Merged supporting reports now provide visibility and cluster-count robustness checks: k=4 at coverage 0.3 retains 591 corners and ARI 0.864; coverage 0.7 retains 587 with ARI 0.8589. At coverage 0.5, k=3, 5 and 6 have ARI 0.841, 0.7267 and 0.7074, respectively. Saved JSON reports reconcile with the committed sensitivity table; these fits were not rerun here. This differs from the proposal's 80%/90% thresholds and training/validation choice over k=2–8. The completed exploratory fit is not a validation-selected predictive setup model, and visible-player-count confounding remains untested [X3, M1].
 
 ## Cutoff-safe dossier example
@@ -162,4 +174,19 @@ The recovered proposal and course requirements now support the [completion check
 
 - Hudl/StatsBomb. StatsBomb Open Data, pinned revision 4b73468fc5b0f1950f9f66fada70ad3a4f9327cb. [Source repository](https://github.com/hudl/open-data/tree/4b73468fc5b0f1950f9f66fada70ad3a4f9327cb).
 - Jesse Davis et al. 2024. Methodology and evaluation in sports analytics: challenges, approaches, and lessons learned. Machine Learning 113, 6977–7010. [Publisher record](https://doi.org/10.1007/s10994-024-06585-0). This supports the distinction between model performance and usefulness evaluation, not our numerical results.
-- CARDS. 2026. From Pixels to Decisions, version 1.0, sections 8–9. [Program brief](https://people.scs.carleton.ca/~ahmedelroby/COMP5118_F26/Sports_Analytics_Program.pdf). The related-work discussion is unfinished; TacticAI is cited in the proposal but its publisher record could not be retrieved during this pass, so no unverified bibliography entry or comparative performance claim is added.
+- CARDS. 2026. From Pixels to Decisions, version 1.0, sections 8–9. [Program brief](https://people.scs.carleton.ca/~ahmedelroby/COMP5118_F26/Sports_Analytics_Program.pdf). V4 adds the checked primary publications below; synthesis still requires owner review, and no cross-study performance equivalence is claimed.
+
+
+- Luca Pappalardo, Paolo Cintia, Alessio Rossi, Emanuele Massucco, Paolo Ferragina, Dino Pedreschi and Fosca Giannotti. 2019. A public data set of spatio-temporal match events in soccer competitions. Scientific Data 6, article236. [Publisher](https://www.nature.com/articles/s41597-019-0247-7).
+- Zhe Wang, Petar Veličković, Daniel Hennes et al. 2024. TacticAI: an AI assistant for football tactics. Nature Communications15, article1906. [Publisher](https://www.nature.com/articles/s41467-024-45965-x). All 23 authors are recorded in the checked BibTeX entry.
+- Tilmann Gneiting and Adrian E. Raftery. 2007. Strictly Proper Scoring Rules, Prediction, and Estimation. Journal of the American Statistical Association102(477), 359–378. [Author-hosted published paper](https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf); DOI10.1198/016214506000001437.
+
+
+## LaTeX v3 preparation note
+
+The completed methods/results above have been transferred into the LaTeX manuscript without new experiments. Its display order places short-threshold robustness before spatial coverage and the dossier, so automatic table numbers differ from this historical Markdown numbering; stable LaTeX labels and all values are retained. Table typography is natural-size, the window table is split into panels, and dossier history is transposed. The feature definition fixes goal direction toward x120, columns increasing in x, and displayed grid rows increasing in normalized y down the image; the normalized corner at y80 is beyond the bottom, not top, edge. Existing raster values are unchanged. The supplied v2 PDF has five pages; no v3 page-count or final layout claim is made before compilation. Missing examples, reader evaluation and proposal-scope decisions remain pending.
+
+
+## LaTeX v4 layout and related-work note
+
+The ten-page supplied v3 PDF was inspected. V4 restores ordinary two-column flow around the spatial figures, uses normal-size tables and removes the forced reference-page break. A portable Tectonic/XeTeX build permits local visual checks; exact PDF count/hash and compiler warnings are in the separate v4 verification record. Six primary-source/material references now support the four-part related-work draft [L1]. None supplies new project results. The numerical tables and image bytes are unchanged. Subject review, final-engine approval, author metadata, more dossiers, reader evaluation and scope decisions remain pending.

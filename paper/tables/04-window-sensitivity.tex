@@ -1,0 +1,31 @@
+\begin{table*}[tbp]
+\caption{Outcome-window robustness at short limit 15. Panel A uses all 15,482 league corners: shot-producing corners are distinct from shot-event totals. Panel B uses the same 3,154 test corners; alpha=50, beta is validation-selected per window. Differences are shrinkage minus pooled with conditional 95\% match-bootstrap intervals. Uncapped retains all non-time boundaries. The 10-second upper endpoint rounds to zero. Source: S1.}
+\label{tab:window-sensitivity}
+\centering\normalsize
+\setlength{\tabcolsep}{4pt}
+\textbf{A. Attributed outcomes and selected shot smoothing}
+\par\smallskip
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Window & Shots & Goals & Shot-producing & Percentage & Beta \\
+\midrule
+10 s & 4,951 & 428 & 4,560 & (29.45\%) & 500 \\
+15 s, primary & 5,368 & 464 & 4,893 & (31.60\%) & 200 \\
+20 s & 5,598 & 486 & 5,069 & (32.74\%) & 200 \\
+Uncapped & 6,033 & 517 & 5,401 & (34.89\%) & 200 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\textbf{B. Held-out shot prediction (Brier score)}
+\par\smallskip
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+Window & Pooled & Unsmoothed & Shrunk & Difference [95\% interval] \\
+\midrule
+10 s & 0.213014 & 0.213300 & 0.212676 & -0.000338 [-0.0008, 0.0000] \\
+15 s, primary & 0.220439 & 0.221370 & 0.220268 & -0.000170 [-0.0009, 0.0006] \\
+20 s & 0.223592 & 0.224710 & 0.223442 & -0.000149 [-0.0009, 0.0006] \\
+Uncapped & 0.230459 & 0.231987 & 0.230517 & 0.000059 [-0.0008, 0.0008] \\
+\bottomrule
+\end{tabular}
+\end{table*}
