@@ -8,13 +8,15 @@
 \pagestyle{plain}
 \usepackage{placeins}
 \usepackage{seqsplit}
+\usepackage{balance}
 % Allow provenance hashes to wrap without changing sigconf geometry.
 \newcommand{\codehash}[1]{\texttt{\seqsplit{#1}}}
 \title{Corner scouting from event histories and partial spatial snapshots}
 % Author identities/order and affiliations require confirmation.
 \author{Project team (author details pending confirmation)}
-\affiliation{\institution{Affiliation pending confirmation}\country{Canada}}
+\affiliation{\institution{Affiliation pending confirmation}\city{Pending confirmation}\country{Canada}}
 \begin{document}
+\raggedbottom
 \begin{abstract}
 We assemble an auditable corner-kick dataset from pinned open event data and
 evaluate whether team history improves delivery and shot prediction over pooled
@@ -473,5 +475,6 @@ unfinished; extra text cannot replace that evidence.
 % A single final barrier keeps remaining floats before references without a forced new page.
 \FloatBarrier
 \bibliographystyle{ACM-Reference-Format}
+\balance
 \bibliography{references}
 \end{document}
